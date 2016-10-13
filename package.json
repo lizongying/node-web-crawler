@@ -8,8 +8,9 @@
   },
   "dependencies": {
     "crawler": "~0.4.3",
+    "mongodb": "~2.2.8",
     "mysql": "~2.11.1",
-    "mongodb": "~2.2.8"
+    "superagent": "^2.3.0"
   },
   "repository": {
     "type": "git",

@@ -15,7 +15,7 @@ var qs = require('querystring');
 var conf = require('./conf/');
 var dao = require('./dao/');
 
-var env = 'production';//环境 test或production
+var env = 'test';//环境 test或production
 var config = new conf[env]();
 
 var mysqlHost = config.mysqlHost;//mysql地址
@@ -782,8 +782,9 @@ app.get('/', function (req, res) {
         updateTimeErrorCount: {name: 'updateTimeErrorCount', info: '更新时间失败    ', val: updateTimeErrorCount},
         updateTimeSuccessCount: {name: 'updateTimeSuccessCount', info: '更新时间成功    ', val: updateTimeSuccessCount}
     };
-    switch (req.query) {
-        case 'server':
+    switch (req.query.server) {
+        case 'admin':
+            res.json(return_json);
             break;
         default:
             res.json(return_json);
