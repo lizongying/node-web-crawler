@@ -1,10 +1,15 @@
 {
   "name": "node-web-crawler",
   "version": "0.0.1",
-  "description": "spider",
+  "description": "spider-web-crawler",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "crawler": "~0.4.3",
+    "mysql": "~2.11.1",
+    "mongodb": "~2.2.8"
   },
   "repository": {
     "type": "git",
