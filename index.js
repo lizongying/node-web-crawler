@@ -15,6 +15,12 @@ var qs = require('querystring');
 var conf = require('./conf/');
 var dao = require('./dao/');
 
+var logWorker = require('./worker/logworker');
+var urlWorker = require('./worker/urlworker');
+
+require('./lib/array.js');
+require('./lib/date.js');
+
 var env = 'test';//环境 test或production
 var config = new conf[env]();
 
@@ -22,12 +28,12 @@ var mysqlHost = config.mysqlHost;//mysql地址
 var mysqlPort = config.mysqlPort;//mysq端口
 var mysqlUser = config.mysqlUser;//mysql用户名
 var mysqlPassword = config.mysqlPassword;//mysql密码
-var mysqlDatabase = config.database;//mysql数据库
+var mysqlDatabase = config.mysqlDatabase;//mysql数据库
 var mongodbHost = config.mongodbHost;//mongodb地址
 var mongodbPort = config.mongodbPort;//mongodb端口
 var mongodbDatabase = config.mongodbDatabase;//mongodb数据库
 
-var serverCount = config.serverCount;//服务器数量 默认5，必须设置
+var serverCount = config.serverCount;//服务器数量，必须设置
 var serverCurrent = config.serverCurrent;//当前服务器 （从0开始），必须设置
 var tableBook = config.tableBook;//书表
 var uri = config.uri;//目标地址
@@ -41,6 +47,8 @@ var retries = config.retries;//重试次数 默认3
 var retryTimeout = config.retryTimeout;//重试超时
 var showLogInterval = config.showLogInterval;//显示log时间间隔 ms
 var reqInterval = config.reqInterval;//重新请求间隔 ms
+var userAgent = config.userAgent;// 随机页头
+var proxyList = config.proxyList;//代理地址列表
 
 var pushCurrent = 0;//当前id，不需要设置
 var cCount = 0;//当前队列数量，不需要设置
@@ -55,46 +63,34 @@ var stateErrorSuccessCount = 0;//保存状态错误成功数量
 var stateSuccessCount = 0;//状态正确数量
 var stateSuccessErrorCount = 0;//保存状态正确失败数量
 var stateSuccessSuccessCount = 0;//保存状态正确成功数量
-var updateTimeErrorCount = 0;//更新时间失败
-var updateTimeSuccessCount = 0;//更新时间成功
+var queryUrlErrorCount = 0;//获取目标地址错误次数
+var queryUrlSuccessCount = 0;//获取目标地址成功次数
 var queryUriCount = 0;//获取目标地址数量
-var reqID = 0;//请求的id
+
+var reqState = '准备中';//请求状态
 var logPath = '/default.log';//log地址
 var sql = '';//sql
 var logParams = [];//log参数
 var mongodbParams = {};//mongodb参数
-var proxy = '';//代理地址
-var separator = '\n';
 
 var douban_id = 0;//豆瓣id
 var douban_status = 0;//豆瓣状态
 var create_time = 0;//创建时间
-var idSuccess = 0;//最后成功id
 
-//随机
-var userAgent = [
-    'Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.1.6) Gecko/20091201 Firefox/3.5.6',
-    'Mozilla/5.0 (Windows NT 6.2) AppleWebKit/535.11 (KHTML, like Gecko) Chrome/17.0.963.12 Safari/535.11',
-    'Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.2; Trident/6.0)',
-    'Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_8; en-us) AppleWebKit/534.50 (KHTML, like Gecko) Version/5.1 Safari/534.50',
-    'Mozilla/5.0 (Windows; U; Windows NT 6.1; en-us) AppleWebKit/534.50 (KHTML, like Gecko) Version/5.1 Safari/534.50',
-    'Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Trident/5.0)',
-    'Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.0; Trident/4.0)',
-    'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.0)',
-    'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1; 360SE)',
-    'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1; Avant Browser)',
-    'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)',
-    'Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.6; rv:2.0.1) Gecko/20100101 Firefox/4.0.1',
-    'Mozilla/5.0 (Windows NT 6.1; rv:2.0.1) Gecko/20100101 Firefox/4.0.1',
-    'Opera/9.80 (Macintosh; Intel Mac OS X 10.6.8; U; en) Presto/2.8.131 Version/11.11',
-    'Opera/9.80 (Windows NT 6.1; U; en) Presto/2.8.131 Version/11.11',
-    'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1; Maxthon 2.0)',
-    'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1; TencentTraveler 4.0)',
-    'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)',
-    'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1; The World)',
-    'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1; Trident/4.0; SE 2.X MetaSr 1.0; SE 2.X MetaSr 1.0; .NET CLR 2.0.50727; SE 2.X MetaSr 1.0)'
-];
+var separator = '\r\n';
+var beginTime = '';//开始时间
+var endTime = '';//结束时间
+var urlList = [];//url列表
+var reqUrl = '';//当前请求的url
+var lastUrl = '';//最后返回的url
+var successUrl = '';//最后成功url
+var beginUrl = '';//开始的url
+var endUrl = '';//结束的url
+
+//代理
+var proxy = '';//代理地址
+var updateTimeErrorCount = 0;//更新代理过期失败
+var updateTimeSuccessCount = 0;//更新代理过期成功
 
 var c = new crawler({
     maxConnections: maxConnections,
@@ -106,13 +102,15 @@ var c = new crawler({
         setTimeout(begin_craw, parseInt(Math.random() * reqInterval, 10));
 
         cCount--;
-        crawler_log('debug', '当前队列数量', cCount);
+        log.add('debug', '当前队列数量', cCount);
 
         rspCount++;
-        crawler_log('debug', '返回数量', rspCount);
+        log.add('debug', '返回数量', rspCount);
 
         create_time = (new Date()).getTime().toString().substr(0, 10);
-        douban_id = result.options.id;
+        lastUrl = result.options.uri;
+        douban_id = lastUrl.replace(/[^0-9]/ig, '');
+        proxy = result.options.proxies[0];
         douban_status = result.statusCode;
 
         sql = 'INSERT INTO ' + tableBook + '(' +
@@ -139,8 +137,8 @@ var c = new crawler({
 
         if (error) {
             noneErrorCount++;
-            crawler_log('debug', '返回错误数量', noneErrorCount);
-            crawler_log('error', '返回错误', error);
+            log.add('debug', '返回错误数量', noneErrorCount);
+            log.add('error', '返回错误', error);
 
             //写入数据库
             //db.add(sql, logParams, function(err, res){
@@ -173,12 +171,12 @@ var c = new crawler({
             mg.add(tableBook, mongodbParams, function (err, res) {
                 if (err) {
                     noneErrorErrorCount++;
-                    crawler_log('debug', '保存返回错误失败数量', noneErrorErrorCount);
-                    crawler_log('error', '保存返回错误失败', err);
+                    log.add('debug', '保存返回错误失败数量', noneErrorErrorCount);
+                    log.add('error', '保存返回错误失败', err);
                 } else {
                     noneErrorSuccessCount++;
-                    crawler_log('debug', '保存返回错误成功数量', noneErrorSuccessCount);
-                    crawler_log('debug', '保存返回错误成功', res);
+                    log.add('debug', '保存返回错误成功数量', noneErrorSuccessCount);
+                    log.add('debug', '保存返回错误成功', res.ops);
                 }
             });
 
@@ -187,8 +185,8 @@ var c = new crawler({
 
         if (douban_status != 200) {
             stateErrorCount++;
-            crawler_log('debug', '状态错误数量', stateErrorCount);
-            crawler_log('debug', '状态错误', douban_status);
+            log.add('debug', '状态错误数量', stateErrorCount);
+            log.add('debug', '状态错误', douban_status);
 
             //写入数据库
             //db.add(sql, logParams, function(err, res){
@@ -221,12 +219,12 @@ var c = new crawler({
             mg.add(tableBook, mongodbParams, function (err, res) {
                 if (err) {
                     stateErrorErrorCount++;
-                    crawler_log('debug', '保存状态错误失败数量', stateErrorErrorCount);
-                    crawler_log('error', '保存状态错误失败', err);
+                    log.add('debug', '保存状态错误失败数量', stateErrorErrorCount);
+                    log.add('error', '保存状态错误失败', err);
                 } else {
                     stateErrorSuccessCount++;
-                    crawler_log('debug', '保存状态错误成功数量', stateErrorSuccessCount);
-                    crawler_log('debug', '保存状态错误成功', res);
+                    log.add('debug', '保存状态错误成功数量', stateErrorSuccessCount);
+                    log.add('debug', '保存状态错误成功', res.ops);
                 }
             });
 
@@ -497,219 +495,63 @@ var c = new crawler({
         mg.add(tableBook, mongodbParams, function (err, res) {
             if (err) {
                 stateSuccessErrorCount++;
-                crawler_log('debug', '保存状态正确失败数量', stateSuccessErrorCount);
-                crawler_log('error', '保存状态正确失败', err);
+                log.add('debug', '保存状态正确失败数量', stateSuccessErrorCount);
+                log.add('error', '保存状态正确失败', err);
             } else {
                 stateSuccessSuccessCount++;
-                crawler_log('debug', '保存状态正确成功数量', stateSuccessSuccessCount);
-                crawler_log('debug', '保存状态正确成功', res);
+                log.add('debug', '保存状态正确成功数量', stateSuccessSuccessCount);
+                log.add('debug', '保存状态正确成功', res.ops);
                 idSuccess = douban_id;
             }
         });
         stateSuccessCount++;
-        crawler_log('debug', '状态成功数量', stateSuccessCount);
+        log.add('debug', '状态成功数量', stateSuccessCount);
     }
 });
 
-//增加地址
-function add_uri() {
-
-    //如果初始的情况下
-    if (pushCurrent === 0) {
-        pushCurrent = pushBegin;
-    }
-
-    //结束地址
-    var push = pushCurrent + serverCount;
-    if (push > pushEnd) {
-        push = pushEnd;
-    }
-    crawler_log('debug', '开始目标地址', pushCurrent);
-    crawler_log('debug', '结束目标地址', push);
-
-    for (var i = pushCurrent; i < push; i++) {
-        var isServer = i % serverCount;
-        crawler_log('debug', '验证服务器', isServer);
-        crawler_log('debug', '当前服务器', serverCurrent);
-
-        //不是当前服务器
-        if (isServer !== serverCurrent) {
-            continue;
-        }
-
-        reqID = i;
-        crawler_log('debug', '目标地址增加', reqID);
-
-        queryUriCount++;
-        crawler_log('debug', '目标地址数量', queryUriCount);
-
-        pushCurrent = i + 1;
-    }
-}
-
 //开始爬取
 function begin_craw() {
-    reqID = 0;
 
-    //获取目标地址
-    add_uri();
+    proxyList.forEach(function (e) {
+        //获取目标地址
+        reqUrl = urlList.shift();
 
-    //检查目标地址是否存在，应该在获取目标地址之后执行爬取
-    if (reqID === 0) {
-        crawler_log('debug', '当前目标地址为空', reqID);
-        return;
-    }
+        //检查目标地址是否存在，应该在获取目标地址之后执行爬取
+        if (!reqUrl) {
+            log.add('debug', '当前目标地址为空', reqUrl);
+            reqUrl = '';
+            reqState = '已结束';
+            endTime = (new Date()).format('MM-dd HH:ii:ss');
+            // 关闭url数据库
+            // db.close();
+            return;
+        }
 
-    var numAgent = parseInt(Math.random() * 20, 10);
+        var numAgent = parseInt(Math.random() * 20, 10);
 
-    crawler_log('debug', '请求数据', reqID);
+        log.add('debug', '请求数据', reqUrl);
 
-    c.queue({
-        uri: uri + reqID,
-        userAgent: userAgent[numAgent],
-        id: reqID
+        c.queue({
+            uri: reqUrl,
+            userAgent: userAgent[numAgent],
+            proxies: ['http:157.119.71.7:8089']
+        });
+        log.add('debug', '代理地址', e);
+        cCount++;
+        log.add('debug', '当前队列数量', cCount);
+
+        reqCount++;
+        log.add('debug', '请求数量', reqCount);
     });
-
-    cCount++;
-    crawler_log('debug', '当前队列数量', cCount);
-
-    reqCount++;
-    crawler_log('debug', '请求数量', reqCount);
-}
-
-//log
-function crawler_log(level, title, content) {
-    var timeCurrent = new Date();
-
-    //判断环境
-    switch (env) {
-        case 'test':
-            switch (level) {
-                case 'debug':
-                    console.log(title, content);
-                    break;
-                case 'info':
-                    //console.log(title, content);
-                    break;
-                case 'error':
-                    console.log(title, content);
-                    break;
-                default :
-                    break;
-            }
-            break;
-        case 'production':
-            switch (level) {
-                case 'debug':
-                    //console.log(title, content);
-                    break;
-                case 'info':
-                    console.log(title, content);
-                    break;
-                case 'error':
-                    //console.log(title, content);
-                    break;
-                default :
-                    break;
-            }
-
-            //写入文件
-            logPath = '/log/' + level + '/' + timeCurrent.format('yyyy-MM-dd') + '.log';//文件名
-            logParams = [
-                timeCurrent.format('HH:ii:ss'),
-                level,
-                title,
-                content
-            ];
-
-            log.add(logPath, logParams.join(','), separator, function (err) {
-                if (err) {
-                    //console.log('debug', '写入文件失败');
-                } else {
-                    //console.log('debug', '写入文件成功');
-                }
-            });
-            break;
-        default :
-            console.log(title, content);
-            break;
-    }
 }
 
 //目标地址不能少于最小值
 if (pushEnd - pushBegin < uriCountMin) {
-    crawler_log('debug', '请求数据不能小于', uriCountMin);
+    log.add('debug', '请求数据不能小于', uriCountMin);
     return;
 }
 
-//显示log
-function show_log() {
-    var currentTime = (new Date()).format('MM-dd HH:ii:ss');
-    crawler_log('info', '当前时间        ', currentTime);
-    crawler_log('info', '开始时间        ', beginTime);
-    crawler_log('info', '最后返回id      ', douban_id);
-    crawler_log('info', '最后成功id      ', idSuccess);
-    crawler_log('info', '开始id          ', pushBegin);
-    crawler_log('info', '结束id          ', pushEnd);
-    crawler_log('info', '当前请求id      ', reqID);
-    crawler_log('info', '当前队列数量    ', cCount);
-    crawler_log('info', '获取目标地址数量', queryUriCount);
-    crawler_log('info', '请求数量        ', reqCount);
-    crawler_log('info', '返回数量        ', rspCount);
-    crawler_log('info', '返回错误数量    ', noneErrorCount);
-    crawler_log('info', '保存返回错误失败', noneErrorErrorCount);
-    crawler_log('info', '保存返回错误成功', noneErrorSuccessCount);
-    crawler_log('info', '状态错误数量    ', stateErrorCount);
-    crawler_log('info', '保存状态错误失败', stateErrorErrorCount);
-    crawler_log('info', '保存状态错误成功', stateErrorSuccessCount);
-    crawler_log('info', '状态成功数量    ', stateSuccessCount);
-    crawler_log('info', '保存状态正确失败', stateSuccessErrorCount);
-    crawler_log('info', '保存状态正确成功', stateSuccessSuccessCount);
-    crawler_log('info', '更新时间失败    ', updateTimeErrorCount);
-    crawler_log('info', '更新时间成功    ', updateTimeSuccessCount);
-    crawler_log('info', '################', '################');
-}
-
-Array.prototype.indexOf = function (val) {
-    for (var i = 0; i < this.length; i++) {
-        if (this[i] == val) return i;
-    }
-    return -1;
-};
-
-Array.prototype.remove = function (val) {
-    var index = this.indexOf(val);
-    if (index > -1) {
-        this.splice(index, 1);
-    }
-};
-
-// 对Date的扩展，将 Date 转化为指定格式的String
-// 月(M)、日(d)、小时(h)、分(i)、秒(s)、季度(q) 可以用 1-2 个占位符，
-// 年(y)可以用 1-4 个占位符，毫秒(S)只能用 1 个占位符(是 1-3 位的数字)
-// 例子：
-// (new Date()).format('yyyy-MM-dd hh:ii:ss.S') ==> 2006-07-02 08:09:04.423
-// (new Date()).format('yyyy-M-d h:i:s.S')      ==> 2006-7-2 8:9:4.18
-Date.prototype.format = function (fmt) { //author: meizz
-    var o = {
-        'M+': this.getMonth() + 1,                 //月份
-        'd+': this.getDate(),                    //日
-        'H+': this.getHours(),                   //小时
-        'h+': this.getHours() % 12 == 0 ? 12 : this.getHours() % 12, //小时
-        'i+': this.getMinutes(),                 //分
-        's+': this.getSeconds(),                 //秒
-        'q+': Math.floor((this.getMonth() + 3) / 3), //季度
-        'S': this.getMilliseconds()             //毫秒
-    };
-    if (/(y+)/.test(fmt))
-        fmt = fmt.replace(RegExp.$1, (this.getFullYear() + '').substr(4 - RegExp.$1.length));
-    for (var k in o)
-        if (new RegExp('(' + k + ')').test(fmt))
-            fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (('00' + o[k]).substr(('' + o[k]).length)));
-    return fmt;
-};
-
-var beginTime = (new Date()).format('MM-dd HH:ii:ss');
+beginTime = new Date();
 
 //连接mysql
 //var db = new dao['mysql']();
@@ -731,20 +573,40 @@ var mongodbConf = {
 };
 
 //写入文件
-var log = new dao['file']();
-var path = __dirname;
-log.init(path);
+var file = new dao['file']();
+file.init(__dirname);
+
+//log
+var log = new logWorker(env, separator, logPath, logParams);
 
 mg.init(mongodbConf, function (err) {
     if (err) {
-        crawler_log('error', 'mongodb初始化错误', err);
+        log.add('error', 'mongodb初始化错误', err);
         return;
     }
-    begin_craw();
-});
 
-//展示log
-// setInterval(show_log, showLogInterval);
+    log.add('debug', '开始目标地址', pushBegin);
+    log.add('debug', '结束目标地址', pushEnd);
+    var get_url = new urlWorker(env, serverCount, serverCurrent, pushBegin, pushEnd);
+    get_url.get(function (error, result) {
+        reqState = '运行中';
+
+        queryUrlSuccessCount++;
+        log.add('debug', '获取目标地址成功数量', queryUrlSuccessCount);
+
+        if (error) {
+            log.add('debug', '获取目标地址错误', error.code);
+        } else {
+            urlList = result;
+
+            beginUrl = urlList[0];
+            endUrl = urlList[urlList.length - 1];
+
+            queryUriCount = urlList.length;
+            log.add('debug', '目标地址数量', urlList.length);
+        }
+    });
+});
 
 //请求
 // superagent.get('')
@@ -756,42 +618,64 @@ mg.init(mongodbConf, function (err) {
 //     });
 
 var app = express();
-app.get('/', function (req, res) {
-    var currentTime = (new Date()).format('MM-dd HH:ii:ss');
-    return_json = {
-        currentTime: {name: 'currentTime', info: '当前时间        ', val: currentTime},
-        beginTime: {name: 'beginTime', info: '开始时间        ', val: beginTime},
-        douban_id: {name: 'douban_id', info: '最后返回id      ', val: douban_id},
-        idSuccess: {name: 'idSuccess', info: '最后成功id      ', val: idSuccess},
-        pushBegin: {name: 'pushBegin', info: '开始id          ', val: pushBegin},
-        pushEnd: {name: 'pushEnd', info: '结束id          ', val: pushEnd},
-        reqID: {name: 'reqID', info: '当前请求id      ', val: reqID},
-        cCount: {name: 'cCount', info: '当前队列数量    ', val: cCount},
-        queryUriCount: {name: 'queryUriCount', info: '获取目标地址数量', val: queryUriCount},
-        reqCount: {name: 'reqCount', info: '请求数量        ', val: reqCount},
-        rspCount: {name: 'rspCount', info: '返回数量        ', val: rspCount},
-        noneErrorCount: {name: 'noneErrorCount', info: '返回错误数量    ', val: noneErrorCount},
-        noneErrorErrorCount: {name: 'noneErrorErrorCount', info: '保存返回错误失败', val: noneErrorErrorCount},
-        noneErrorSuccessCount: {name: 'noneErrorSuccessCount', info: '保存返回错误成功', val: noneErrorSuccessCount},
-        stateErrorCount: {name: 'stateErrorCount', info: '状态错误数量    ', val: stateErrorCount},
-        stateErrorErrorCount: {name: 'stateErrorErrorCount', info: '保存状态错误失败', val: stateErrorErrorCount},
-        stateErrorSuccessCount: {name: 'stateErrorSuccessCount', info: '保存状态错误成功', val: stateErrorSuccessCount},
-        stateSuccessCount: {name: 'stateSuccessCount', info: '状态成功数量    ', val: stateSuccessCount},
-        stateSuccessErrorCount: {name: 'stateSuccessErrorCount', info: '保存状态正确失败', val: stateSuccessErrorCount},
-        stateSuccessSuccessCount: {name: 'stateSuccessSuccessCount', info: '保存状态正确成功', val: stateSuccessSuccessCount},
-        updateTimeErrorCount: {name: 'updateTimeErrorCount', info: '更新时间失败    ', val: updateTimeErrorCount},
-        updateTimeSuccessCount: {name: 'updateTimeSuccessCount', info: '更新时间成功    ', val: updateTimeSuccessCount}
+app.get('/api', function (req, res) {
+    var currentTime = new Date();
+    var pass = currentTime.getTime() - beginTime.getTime();
+    var speed = 0;
+
+    if (reqState === '运行中') {
+        speed = parseInt(rspCount / pass * 1000 * 3600);
+    }
+
+    var finishTime = (queryUriCount - rspCount) / (rspCount / pass);
+
+    var return_data = {
+        serverCount: {info: '服务器总数', val: serverCount},
+        serverCurrent: {info: '当前服务器', val: serverCurrent},
+        speed: {info: '当前速度', val: speed + '个/小时'},
+        passTime: {info: '已过时间', val: currentTime.diff(beginTime)},
+        currentTime: {info: '当前时间', val: currentTime.format('MM-dd HH:ii:ss')},
+        beginTime: {info: '开始时间', val: beginTime.format('MM-dd HH:ii:ss')},
+        finishTime: {
+            info: '预计结束时间',
+            val: finishTime ? (new Date(currentTime.getTime() + finishTime)).format('MM-dd HH:ii:ss') : ''
+        },
+        endTime: {info: '结束时间', val: endTime},
+        reqState: {info: '请求状态', val: reqState},
+        lastUrl: {info: '最后返回URL', val: lastUrl},
+        successUrl: {info: '最后成功URL', val: successUrl},
+        pushBegin: {info: '开始URL', val: beginUrl},
+        pushEnd: {info: '结束URL', val: endUrl},
+        reqID: {info: '当前请求URL', val: reqUrl},
+        cCount: {info: '当前队列数量', val: cCount},
+        queryUrlErrorCount: {info: '获取目标地址失败', val: queryUrlErrorCount},
+        queryUrlSuccessCount: {info: '获取目标地址成功', val: queryUrlSuccessCount},
+        queryUriCount: {info: '获取目标地址数量', val: queryUriCount},
+        reqCount: {info: '请求数量', val: reqCount},
+        rspCount: {info: '返回数量', val: rspCount},
+        noneErrorCount: {info: '返回错误数量', val: noneErrorCount},
+        noneErrorErrorCount: {info: '保存返回错误失败', val: noneErrorErrorCount},
+        noneErrorSuccessCount: {info: '保存返回错误成功', val: noneErrorSuccessCount},
+        stateErrorCount: {info: '状态错误数量', val: stateErrorCount},
+        stateErrorErrorCount: {info: '保存状态错误失败', val: stateErrorErrorCount},
+        stateErrorSuccessCount: {info: '保存状态错误成功', val: stateErrorSuccessCount},
+        stateSuccessCount: {info: '状态成功数量', val: stateSuccessCount},
+        stateSuccessErrorCount: {info: '保存状态正确失败', val: stateSuccessErrorCount},
+        stateSuccessSuccessCount: {info: '保存状态正确成功', val: stateSuccessSuccessCount},
+        updateTimeErrorCount: {info: '更新代理过期失败', val: updateTimeErrorCount},
+        updateTimeSuccessCount: {info: '更新代理过期成功', val: updateTimeSuccessCount}
     };
+
     switch (req.query.server) {
         case 'admin':
-            res.json(return_json);
+            res.json({code: 1, message: 'ok', data: return_data});
             break;
         default:
-            res.json(return_json);
+            res.json({code: 0, message: 'not allow'});
             break;
     }
 });
 
 app.listen(3000, function () {
-    console.log('app is listening at port 3000');
+    log.add('info', 'webUi', 'app is listening at port 3000');
 });

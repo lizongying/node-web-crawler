@@ -1,7 +1,9 @@
 /**
  * Created by michael on 2016-08-12.
  */
-function Common() {}
+
+function Common() {
+}
 
 Common.prototype = {
     serverCount: 5,//服务器数量 默认5，必须设置
@@ -16,7 +18,35 @@ Common.prototype = {
     retries: 3,//重试次数 默认3
     retryTimeout: 10000,//重试超时
     showLogInterval: 1000,//显示log时间间隔 ms
-    reqInterval: 5000//重新请求间隔 ms
+    reqInterval: 5000,//重新请求间隔 ms
+    userAgent: [
+        'Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.1.6) Gecko/20091201 Firefox/3.5.6',
+        'Mozilla/5.0 (Windows NT 6.2) AppleWebKit/535.11 (KHTML, like Gecko) Chrome/17.0.963.12 Safari/535.11',
+        'Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.2; Trident/6.0)',
+        'Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_8; en-us) AppleWebKit/534.50 (KHTML, like Gecko) Version/5.1 Safari/534.50',
+        'Mozilla/5.0 (Windows; U; Windows NT 6.1; en-us) AppleWebKit/534.50 (KHTML, like Gecko) Version/5.1 Safari/534.50',
+        'Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Trident/5.0)',
+        'Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.0; Trident/4.0)',
+        'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.0)',
+        'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1; 360SE)',
+        'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1; Avant Browser)',
+        'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)',
+        'Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.6; rv:2.0.1) Gecko/20100101 Firefox/4.0.1',
+        'Mozilla/5.0 (Windows NT 6.1; rv:2.0.1) Gecko/20100101 Firefox/4.0.1',
+        'Opera/9.80 (Macintosh; Intel Mac OS X 10.6.8; U; en) Presto/2.8.131 Version/11.11',
+        'Opera/9.80 (Windows NT 6.1; U; en) Presto/2.8.131 Version/11.11',
+        'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1; Maxthon 2.0)',
+        'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1; TencentTraveler 4.0)',
+        'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)',
+        'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1; The World)',
+        'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1; Trident/4.0; SE 2.X MetaSr 1.0; SE 2.X MetaSr 1.0; .NET CLR 2.0.50727; SE 2.X MetaSr 1.0)'
+    ],
+    proxyList: [
+        '1',
+        '2',
+        '3'
+    ]
 };
 
 exports = module.exports = Common;
