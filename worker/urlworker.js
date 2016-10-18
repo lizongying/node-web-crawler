@@ -1,17 +1,17 @@
 /**
  * Created by michael on 2016-10-17.
  */
+var config = require('../conf/config');
+var conf = new config();
 
-var logWorker = require('./logworker');
 var urlList = [];
 
 //获取目标地址
 function UrlWorker(env, serverCount, serverCurrent, pushBegin, pushEnd) {
-    this.serverCount = serverCount;
-    this.serverCurrent = serverCurrent;
-    this.pushBegin = pushBegin;
-    this.pushEnd = pushEnd;
-    this.log = new logWorker(env);
+    this.serverCount = serverCount ? serverCount : conf.serverCount;
+    this.serverCurrent = serverCurrent ? serverCurrent : conf.serverCurrent;
+    this.pushBegin = pushBegin ? pushBegin : conf.pushBegin;
+    this.pushEnd = pushEnd ? pushEnd : conf.pushEnd;
 }
 
 UrlWorker.prototype.get = function (callback) {
@@ -31,7 +31,7 @@ UrlWorker.prototype.get = function (callback) {
             continue;
         }
 
-        var url = 'http://book.douban.com/subject/' + i;
+        var url = 'https://book.douban.com/subject/' + i;
         urlList.push(url);
     }
 
