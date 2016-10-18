@@ -3,7 +3,7 @@
  */
 var config = require(__dirname);
 
-var env = 'test';//环境 test或production
+var env = 'production';//环境 test或production
 var conf = new config[env]();
 
 function Config() {

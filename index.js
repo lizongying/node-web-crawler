@@ -55,7 +55,7 @@ var successUrl = '';//最后成功url
 var beginUrl = '';//开始的url
 var endUrl = '';//结束的url
 
-var log = new logWorker(); //log
+var log_worker = new logWorker(); //log
 var url_worker = new urlWorker(); //获取地址
 var result_worker = new resultWorker(); //保存结果
 
@@ -67,10 +67,10 @@ var c = new crawler({
     callback: function (error, result, $) {
 
         cCount--;
-        log.add('debug', '当前队列数量', cCount);
+        log_worker.add('debug', '当前队列数量', cCount);
 
         rspCount++;
-        log.add('debug', '返回数量', rspCount);
+        log_worker.add('debug', '返回数量', rspCount);
 
         resultStatus = result.statusCode;
         lastUrl = result.options.uri;
@@ -78,18 +78,18 @@ var c = new crawler({
 
         if (error) {
             noneErrorCount++;
-            log.add('debug', '返回错误数量', noneErrorCount);
-            log.add('error', '返回错误', error);
+            log_worker.add('debug', '返回错误数量', noneErrorCount);
+            log_worker.add('error', '返回错误', error);
 
             result_worker.error(resultStatus, lastUrl, createTime, function (err, res) {
                 if (err) {
                     noneErrorErrorCount++;
-                    log.add('debug', '保存返回错误失败数量', noneErrorErrorCount);
-                    log.add('error', '保存返回错误失败', err);
+                    log_worker.add('debug', '保存返回错误失败数量', noneErrorErrorCount);
+                    log_worker.add('error', '保存返回错误失败', err);
                 } else {
                     noneErrorSuccessCount++;
-                    log.add('debug', '保存返回错误成功数量', noneErrorSuccessCount);
-                    log.add('debug', '保存返回错误成功', res.ops);
+                    log_worker.add('debug', '保存返回错误成功数量', noneErrorSuccessCount);
+                    log_worker.add('debug', '保存返回错误成功', res.ops);
                 }
             });
 
@@ -98,18 +98,18 @@ var c = new crawler({
 
         if (resultStatus != 200) {
             stateErrorCount++;
-            log.add('debug', '状态错误数量', stateErrorCount);
-            log.add('debug', '状态错误', resultStatus);
+            log_worker.add('debug', '状态错误数量', stateErrorCount);
+            log_worker.add('debug', '状态错误', resultStatus);
 
             result_worker.false(resultStatus, lastUrl, createTime, function (err, res) {
                 if (err) {
                     stateErrorErrorCount++;
-                    log.add('debug', '保存状态错误失败数量', stateErrorErrorCount);
-                    log.add('error', '保存状态错误失败', err);
+                    log_worker.add('debug', '保存状态错误失败数量', stateErrorErrorCount);
+                    log_worker.add('error', '保存状态错误失败', err);
                 } else {
                     stateErrorSuccessCount++;
-                    log.add('debug', '保存状态错误成功数量', stateErrorSuccessCount);
-                    log.add('debug', '保存状态错误成功', res.ops);
+                    log_worker.add('debug', '保存状态错误成功数量', stateErrorSuccessCount);
+                    log_worker.add('debug', '保存状态错误成功', res.ops);
                 }
             });
 
@@ -279,18 +279,18 @@ var c = new crawler({
         result_worker.success(resultData, resultStatus, lastUrl, createTime, function (err, res) {
             if (err) {
                 stateSuccessErrorCount++;
-                log.add('debug', '保存状态正确失败数量', stateSuccessErrorCount);
-                log.add('error', '保存状态正确失败', err);
+                log_worker.add('debug', '保存状态正确失败数量', stateSuccessErrorCount);
+                log_worker.add('error', '保存状态正确失败', err);
             } else {
                 stateSuccessSuccessCount++;
-                log.add('debug', '保存状态正确成功数量', stateSuccessSuccessCount);
-                log.add('debug', '保存状态正确成功', res.ops);
+                log_worker.add('debug', '保存状态正确成功数量', stateSuccessSuccessCount);
+                log_worker.add('debug', '保存状态正确成功', res.ops);
                 idSuccess = douban_id;
             }
         });
 
         stateSuccessCount++;
-        log.add('debug', '状态成功数量', stateSuccessCount);
+        log_worker.add('debug', '状态成功数量', stateSuccessCount);
     }
 });
 
@@ -305,7 +305,7 @@ function begin_craw() {
 
             //检查目标地址是否存在，应该在获取目标地址之后执行爬取
             if (!reqUrl) {
-                log.add('debug', '当前目标地址为空', reqUrl);
+                log_worker.add('debug', '当前目标地址为空', reqUrl);
                 reqUrl = '';
                 reqState = '已结束';
                 endTime = (new Date()).format('MM-dd HH:ii:ss');
@@ -317,20 +317,20 @@ function begin_craw() {
 
             var numAgent = parseInt(Math.random() * 20, 10);
 
-            log.add('debug', '请求数据', reqUrl);
+            log_worker.add('debug', '请求数据', reqUrl);
 
             c.queue({
                 uri: reqUrl,
                 userAgent: userAgent[numAgent],
                 proxies: [e]
             });
-            log.add('debug', '代理地址', e);
+            log_worker.add('debug', '代理地址', e);
 
             cCount++;
-            log.add('debug', '当前队列数量', cCount);
+            log_worker.add('debug', '当前队列数量', cCount);
 
             reqCount++;
-            log.add('debug', '请求数量', reqCount);
+            log_worker.add('debug', '请求数量', reqCount);
         });
     } else {
 
@@ -339,7 +339,7 @@ function begin_craw() {
 
         //检查目标地址是否存在，应该在获取目标地址之后执行爬取
         if (!reqUrl) {
-            log.add('debug', '当前目标地址为空', reqUrl);
+            log_worker.add('debug', '当前目标地址为空', reqUrl);
             reqUrl = '';
             reqState = '已结束';
             endTime = (new Date()).format('MM-dd HH:ii:ss');
@@ -351,7 +351,7 @@ function begin_craw() {
 
         var numAgent = parseInt(Math.random() * 20, 10);
 
-        log.add('debug', '请求数据', reqUrl);
+        log_worker.add('debug', '请求数据', reqUrl);
 
         c.queue({
             uri: reqUrl,
@@ -359,10 +359,10 @@ function begin_craw() {
         });
 
         cCount++;
-        log.add('debug', '当前队列数量', cCount);
+        log_worker.add('debug', '当前队列数量', cCount);
 
         reqCount++;
-        log.add('debug', '请求数量', reqCount);
+        log_worker.add('debug', '请求数量', reqCount);
     }
 
     setTimeout(begin_craw, parseInt(Math.random() * reqInterval, 10));
@@ -370,7 +370,7 @@ function begin_craw() {
 
 //目标地址不能少于最小值
 if (pushEnd - pushBegin < uriCountMin) {
-    log.add('debug', '请求数据不能小于', uriCountMin);
+    log_worker.add('debug', '请求数据不能小于', uriCountMin);
     return;
 }
 
@@ -380,10 +380,10 @@ url_worker.get(function (error, result) {
     reqState = '运行中';
 
     queryUrlSuccessCount++;
-    log.add('debug', '获取目标地址成功数量', queryUrlSuccessCount);
+    log_worker.add('debug', '获取目标地址成功数量', queryUrlSuccessCount);
 
     if (error) {
-        log.add('debug', '获取目标地址错误', error.code);
+        log_worker.add('debug', '获取目标地址错误', error.code);
     } else {
         urlList = result;
 
@@ -391,7 +391,7 @@ url_worker.get(function (error, result) {
         endUrl = urlList[urlList.length - 1];
 
         queryUriCount = urlList.length;
-        log.add('debug', '目标地址数量', urlList.length);
+        log_worker.add('debug', '目标地址数量', urlList.length);
 
         setTimeout(begin_craw, parseInt(Math.random() * reqInterval, 10));
     }
@@ -455,5 +455,5 @@ app.get('/api', function (req, res) {
 });
 
 app.listen(3000, function () {
-    log.add('info', 'webUi', 'app is listening at port 3000');
+    log_worker.add('info', 'webUi', 'app is listening at port 3000');
 });

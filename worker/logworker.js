@@ -21,7 +21,6 @@ function LogWorker(env, separator) {
 }
 
 LogWorker.prototype.add = function (level, title, content) {
-    var timeCurrent = new Date();
 
     //判断环境
     switch (this.env) {
@@ -47,35 +46,42 @@ LogWorker.prototype.add = function (level, title, content) {
                     break;
                 case 'info':
                     console.log(title, content);
+                    this._WriteLog(level, title, content);
                     break;
                 case 'error':
                     console.log(title, content);
+                    this._WriteLog(level, title, content);
                     break;
                 default :
                     break;
             }
 
-            //写入文件
-            var logPath = '/log/' + level + '/' + timeCurrent.format('yyyy-MM-dd') + '.log';//文件名
-            var logParams = [
-                timeCurrent.format('HH:ii:ss'),
-                level,
-                title,
-                content
-            ];
-
-            file.add(logPath, logParams.join(','), this.separator, function (err) {
-                if (err) {
-                    console.log('debug', '写入文件失败');
-                } else {
-                    //console.log('debug', '写入文件成功');
-                }
-            });
             break;
         default :
             console.log(title, content);
             break;
     }
 };
+
+LogWorker.prototype._WriteLog = function(level, title, content) {
+    var timeCurrent = new Date();
+
+    //写入文件
+    var logPath = '/log/' + level + '/' + timeCurrent.format('yyyy-MM-dd') + '.log';//文件名
+    var logParams = [
+        timeCurrent.format('HH:ii:ss'),
+        level,
+        title,
+        content
+    ];
+
+    file.add(logPath, logParams.join(','), this.separator, function (err) {
+        if (err) {
+            // console.log('log', '写入文件失败');
+        } else {
+            //console.log('log', '写入文件成功');
+        }
+    });
+}
 
 exports = module.exports = LogWorker;
