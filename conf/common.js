@@ -6,19 +6,19 @@ function Common() {
 }
 
 Common.prototype = {
-    serverCount: 5,//服务器数量 默认5，必须设置
+    serverCount: 1,//服务器数量 默认5，必须设置
     serverCurrent: 0,//当前服务器 （从0开始），必须设置
-    tableBook: 'srf_book_info',//书表
+    resultTable: 'srf_book_info',//表
     uri: 'http://book.douban.com/subject/',//目标地址
-    pushBegin: 10000000,//开始id，包括 (全部服务器)
-    pushEnd: 20000000,//结束id，不包括 (全部服务器)
+    pushBegin: 26880811,//开始id，包括 (全部服务器)
+    pushEnd: 30000000,//结束id，不包括 (全部服务器)
     uriCountMin: 1,//目标地址数量最小值
     maxConnections: 10,//最大连接
     timeout: 60000,//超时（ms）默认60000
     retries: 3,//重试次数 默认3
     retryTimeout: 10000,//重试超时
-    showLogInterval: 1000,//显示log时间间隔 ms
     reqInterval: 5000,//重新请求间隔 ms
+    separator: '\r\n',
     userAgent: [
         'Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.1.6) Gecko/20091201 Firefox/3.5.6',
         'Mozilla/5.0 (Windows NT 6.2) AppleWebKit/535.11 (KHTML, like Gecko) Chrome/17.0.963.12 Safari/535.11',
@@ -43,9 +43,7 @@ Common.prototype = {
         'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1; Trident/4.0; SE 2.X MetaSr 1.0; SE 2.X MetaSr 1.0; .NET CLR 2.0.50727; SE 2.X MetaSr 1.0)'
     ],
     proxyList: [
-        '1',
-        '2',
-        '3'
+        'https:157.119.71.7:8089'
     ]
 };
 

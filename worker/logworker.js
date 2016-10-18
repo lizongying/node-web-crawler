@@ -2,8 +2,12 @@
  * Created by michael on 2016-10-17.
  */
 
+var config = require('../conf/config');
+var conf = new config();
+
 var dao = require('../dao/');
 var path = require('path');
+
 require('../lib/date.js');
 
 //写入文件
@@ -11,11 +15,9 @@ var file = new dao['file']();
 file.init(path.resolve(__dirname, '..'));
 
 // log
-function LogWorker(env, separator, logPath, logParams) {
-    this.env = env;
-    this.separator = separator;
-    this.logPath = logPath;
-    this.logParams = logParams;
+function LogWorker(env, separator) {
+    this.env = env ? env : conf.env;
+    this.separator = separator ? separator : conf.separator;
 }
 
 LogWorker.prototype.add = function (level, title, content) {
@@ -54,15 +56,15 @@ LogWorker.prototype.add = function (level, title, content) {
             }
 
             //写入文件
-            this.logPath = '/log/' + level + '/' + timeCurrent.format('yyyy-MM-dd') + '.log';//文件名
-            this.logParams = [
+            var logPath = '/log/' + level + '/' + timeCurrent.format('yyyy-MM-dd') + '.log';//文件名
+            var logParams = [
                 timeCurrent.format('HH:ii:ss'),
                 level,
                 title,
                 content
             ];
 
-            file.add(this.logPath, this.logParams.join(','), this.separator, function (err) {
+            file.add(logPath, logParams.join(','), this.separator, function (err) {
                 if (err) {
                     console.log('debug', '写入文件失败');
                 } else {
