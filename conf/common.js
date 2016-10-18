@@ -9,7 +9,7 @@ Common.prototype = {
     serverCount: 1,//服务器数量 默认5，必须设置
     serverCurrent: 0,//当前服务器 （从0开始），必须设置
     resultTable: 'srf_book_info',//表
-    uri: 'http://book.douban.com/subject/',//目标地址
+    uri: 'https://book.douban.com/subject/',//目标地址
     pushBegin: 26880811,//开始id，包括 (全部服务器)
     pushEnd: 30000000,//结束id，不包括 (全部服务器)
     uriCountMin: 1,//目标地址数量最小值
@@ -19,6 +19,7 @@ Common.prototype = {
     retryTimeout: 10000,//重试超时
     reqInterval: 5000,//重新请求间隔 ms
     separator: '\r\n',
+    isProxy: 0,//0 不使用代理 1 使用代理
     userAgent: [
         'Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.1.6) Gecko/20091201 Firefox/3.5.6',
         'Mozilla/5.0 (Windows NT 6.2) AppleWebKit/535.11 (KHTML, like Gecko) Chrome/17.0.963.12 Safari/535.11',

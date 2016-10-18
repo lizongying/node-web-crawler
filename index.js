@@ -3,7 +3,6 @@
  */
 var crawler = require('crawler');
 var express = require('express');
-var superagent = require('superagent');
 
 var logWorker = require('./worker/logworker');
 var urlWorker = require('./worker/urlworker');
@@ -27,6 +26,7 @@ var retries = conf.retries;//重试次数 默认3
 var retryTimeout = conf.retryTimeout;//重试超时
 var reqInterval = conf.reqInterval;//重新请求间隔 ms
 var userAgent = conf.userAgent;// 随机页头
+var isProxy = conf.isProxy;//是否使用代理
 var proxyList = conf.proxyList;//代理地址列表
 
 var cCount = 0;//当前队列数量，不需要设置
@@ -115,9 +115,10 @@ var c = new crawler({
 
             return;
         }
-        console.log(resultStatus);
 
+        // console.log(resultStatus);
         // proxy = result.options.proxies[0];
+
         var douban_id = lastUrl.replace(/[^0-9]/ig, '');
 
         var rating = $("#wrapper .rating_num").text();
@@ -295,9 +296,44 @@ var c = new crawler({
 
 //开始爬取
 function begin_craw() {
-
+    if (isProxy) {
 //    遍历代理
-    proxyList.forEach(function (e) {
+        proxyList.forEach(function (e) {
+
+            //获取目标地址
+            reqUrl = urlList.shift();
+
+            //检查目标地址是否存在，应该在获取目标地址之后执行爬取
+            if (!reqUrl) {
+                log.add('debug', '当前目标地址为空', reqUrl);
+                reqUrl = '';
+                reqState = '已结束';
+                endTime = (new Date()).format('MM-dd HH:ii:ss');
+
+                // 关闭url数据库
+                // db.close();
+                return;
+            }
+
+            var numAgent = parseInt(Math.random() * 20, 10);
+
+            log.add('debug', '请求数据', reqUrl);
+
+            c.queue({
+                uri: reqUrl,
+                userAgent: userAgent[numAgent],
+                proxies: [e]
+            });
+            log.add('debug', '代理地址', e);
+
+            cCount++;
+            log.add('debug', '当前队列数量', cCount);
+
+            reqCount++;
+            log.add('debug', '请求数量', reqCount);
+        });
+    } else {
+
         //获取目标地址
         reqUrl = urlList.shift();
 
@@ -307,6 +343,7 @@ function begin_craw() {
             reqUrl = '';
             reqState = '已结束';
             endTime = (new Date()).format('MM-dd HH:ii:ss');
+
             // 关闭url数据库
             // db.close();
             return;
@@ -318,17 +355,15 @@ function begin_craw() {
 
         c.queue({
             uri: reqUrl,
-            userAgent: userAgent[numAgent],
-            proxies: [e]
+            userAgent: userAgent[numAgent]
         });
-        log.add('debug', '代理地址', e);
 
         cCount++;
         log.add('debug', '当前队列数量', cCount);
 
         reqCount++;
         log.add('debug', '请求数量', reqCount);
-    });
+    }
 
     setTimeout(begin_craw, parseInt(Math.random() * reqInterval, 10));
 }
@@ -361,15 +396,6 @@ url_worker.get(function (error, result) {
         setTimeout(begin_craw, parseInt(Math.random() * reqInterval, 10));
     }
 });
-
-//请求
-superagent.get('')
-    .end(function (err, res) {
-        if (err) {
-            return next(err);
-        }
-        var $ = cheerio.load(res.text);
-    });
 
 var app = express();
 app.get('/api', function (req, res) {
@@ -418,7 +444,7 @@ app.get('/api', function (req, res) {
         stateSuccessSuccessCount: {info: '保存状态正确成功', val: stateSuccessSuccessCount}
     };
 
-    switch (req.query.server) {
+    switch (parseInt(req.query.server)) {
         case serverCurrent:
             res.json({code: 1, message: 'ok', data: return_data});
             break;
