@@ -15,15 +15,14 @@ function Config() {
     this.pushBegin = conf.pushBegin;//开始id，包括 (全部服务器)
     this.pushEnd = conf.pushEnd;//结束id，不包括 (全部服务器)
     this.uriCountMin = conf.uriCountMin;//目标地址数量最小值
-    this.expire = conf.expire;//代理ip过期时间 默认60 * 60（一小时）
     this.maxConnections = conf.maxConnections;//最大连接
     this.timeout = conf.timeout;//超时10,000（ms）默认60000
     this.retries = conf.retries;//重试次数 默认3
     this.retryTimeout = conf.retryTimeout;//重试超时
-    this.showLogInterval = conf.showLogInterval;//显示log时间间隔 ms
     this.reqInterval = conf.reqInterval;//重新请求间隔 ms
     this.separator = conf.separator;//分隔符
     this.userAgent = conf.userAgent;// 随机页头
+    this.isProxy = conf.isProxy;// 是否使用代理
     this.proxyList = conf.proxyList;//代理地址列表
     this.mysqlHost = conf.mysqlHost;//mysql地址
     this.mysqlPort = conf.mysqlPort;//mysq端口

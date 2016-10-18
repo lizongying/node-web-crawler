@@ -31,7 +31,7 @@ LogWorker.prototype.add = function (level, title, content) {
                     console.log(title, content);
                     break;
                 case 'info':
-                    //console.log(title, content);
+                    console.log(title, content);
                     break;
                 case 'error':
                     console.log(title, content);
@@ -49,7 +49,7 @@ LogWorker.prototype.add = function (level, title, content) {
                     console.log(title, content);
                     break;
                 case 'error':
-                    //console.log(title, content);
+                    console.log(title, content);
                     break;
                 default :
                     break;

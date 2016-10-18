@@ -7,11 +7,12 @@ var conf = new config();
 var urlList = [];
 
 //获取目标地址
-function UrlWorker(env, serverCount, serverCurrent, pushBegin, pushEnd) {
+function UrlWorker(env, serverCount, serverCurrent, pushBegin, pushEnd, uri) {
     this.serverCount = serverCount ? serverCount : conf.serverCount;
     this.serverCurrent = serverCurrent ? serverCurrent : conf.serverCurrent;
     this.pushBegin = pushBegin ? pushBegin : conf.pushBegin;
     this.pushEnd = pushEnd ? pushEnd : conf.pushEnd;
+    this.uri = uri ? uri : conf.uri;
 }
 
 UrlWorker.prototype.get = function (callback) {
@@ -31,7 +32,7 @@ UrlWorker.prototype.get = function (callback) {
             continue;
         }
 
-        var url = 'https://book.douban.com/subject/' + i;
+        var url = this.uri + i;
         urlList.push(url);
     }
 
