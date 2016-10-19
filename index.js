@@ -296,24 +296,37 @@ var c = new crawler({
 
 //开始爬取
 function begin_craw() {
+
+    //检查目标地址是否存在，应该在获取目标地址之后执行爬取
+    if (urlList.length < 1) {
+        log_worker.add('info', 'work', '当前目标地址为空，已结束');
+        reqUrl = '';
+        reqState = '已结束';
+        endTime = (new Date()).format('MM-dd HH:ii:ss');
+
+        // 关闭url数据库
+        // db.close();
+        return;
+    }
+
     if (isProxy) {
 //    遍历代理
-        proxyList.forEach(function (e) {
-
-            //获取目标地址
-            reqUrl = urlList.shift();
+        proxyList.every(function (e) {
 
             //检查目标地址是否存在，应该在获取目标地址之后执行爬取
-            if (!reqUrl) {
-                log_worker.add('debug', '当前目标地址为空', reqUrl);
+            if (urlList.length < 1) {
+                log_worker.add('info', 'work', '当前目标地址为空，已结束');
                 reqUrl = '';
                 reqState = '已结束';
                 endTime = (new Date()).format('MM-dd HH:ii:ss');
 
                 // 关闭url数据库
                 // db.close();
-                return;
+                return false;
             }
+
+            //获取目标地址
+            reqUrl = urlList.shift();
 
             var numAgent = parseInt(Math.random() * 20, 10);
 
@@ -336,18 +349,6 @@ function begin_craw() {
 
         //获取目标地址
         reqUrl = urlList.shift();
-
-        //检查目标地址是否存在，应该在获取目标地址之后执行爬取
-        if (!reqUrl) {
-            log_worker.add('debug', '当前目标地址为空', reqUrl);
-            reqUrl = '';
-            reqState = '已结束';
-            endTime = (new Date()).format('MM-dd HH:ii:ss');
-
-            // 关闭url数据库
-            // db.close();
-            return;
-        }
 
         var numAgent = parseInt(Math.random() * 20, 10);
 
