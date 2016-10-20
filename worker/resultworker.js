@@ -3,6 +3,7 @@
  */
 
 var config = require('../conf/config');
+
 var conf = new config();
 
 var dao = require('../dao/');

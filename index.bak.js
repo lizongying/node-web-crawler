@@ -76,31 +76,6 @@ var c = new crawler({
         lastUrl = result.options.uri;
         createTime = (new Date()).getTime().toString().substr(0, 10);
 
-        // console.log(resultStatus);
-        var proxy = result.options.proxies[0];
-
-        //检查是否结束
-        if (rspCount === queryUriCount) {
-            log_worker.add('info', 'work', '已结束');
-            reqUrl = '';
-            reqState = '已结束';
-            endTime = (new Date()).format('MM-dd HH:ii:ss');
-
-            // 关闭url数据库
-            // db.close();
-        } else {
-            if (isProxy) {
-                setTimeout(function () {
-                    begin_craw(proxy);
-                }, parseInt(Math.random() * reqInterval, 10));
-            } else {
-                setTimeout(function () {
-                    begin_craw();
-                }, parseInt(Math.random() * reqInterval, 10));
-            }
-
-        }
-
         if (error) {
             noneErrorCount++;
             log_worker.add('debug', '返回错误数量', noneErrorCount);
@@ -118,6 +93,16 @@ var c = new crawler({
                 }
             });
 
+            //检查是否结束
+            if (rspCount === queryUriCount) {
+                log_worker.add('info', 'work', '已结束');
+                reqUrl = '';
+                reqState = '已结束';
+                endTime = (new Date()).format('MM-dd HH:ii:ss');
+
+                // 关闭url数据库
+                // db.close();
+            }
             return;
         }
 
@@ -138,8 +123,22 @@ var c = new crawler({
                 }
             });
 
+            //检查是否结束
+            if (rspCount === queryUriCount) {
+                log_worker.add('info', 'work', '已结束');
+                reqUrl = '';
+                reqState = '已结束';
+                endTime = (new Date()).format('MM-dd HH:ii:ss');
+
+                // 关闭url数据库
+                // db.close();
+            }
+
             return;
         }
+
+        // console.log(resultStatus);
+        // proxy = result.options.proxies[0];
 
         var douban_id = lastUrl.replace(/[^0-9]/ig, '');
 
@@ -314,12 +313,22 @@ var c = new crawler({
 
         stateSuccessCount++;
         log_worker.add('debug', '状态成功数量', stateSuccessCount);
+
+        //检查是否结束
+        if (rspCount === queryUriCount) {
+            log_worker.add('info', 'work', '已结束');
+            reqUrl = '';
+            reqState = '已结束';
+            endTime = (new Date()).format('MM-dd HH:ii:ss');
+
+            // 关闭url数据库
+            // db.close();
+        }
     }
 });
 
-
 //开始爬取
-function begin_craw(proxy) {
+function begin_craw() {
 
     //检查目标地址是否存在，应该在获取目标地址之后执行爬取
     if (urlList.length < 1) {
@@ -327,32 +336,60 @@ function begin_craw(proxy) {
         return;
     }
 
-    //获取目标地址
-    reqUrl = urlList.shift();
+    if (isProxy) {
+//    遍历代理 forEach是函数
+        proxyList.forEach(function (e) {
 
-    var numAgent = parseInt(Math.random() * 20, 10);
+            //检查目标地址是否存在，应该在获取目标地址之后执行爬取
+            if (urlList.length < 1) {
+                log_worker.add('info', 'work', '目标地址已全部加入请求队列');
+            } else {
 
-    log_worker.add('debug', '请求数据', reqUrl);
+                //获取目标地址
+                reqUrl = urlList.shift();
 
-    if (proxy) {
-        c.queue({
-            uri: reqUrl,
-            userAgent: userAgent[numAgent],
-            proxies: [proxy]
+                var numAgent = parseInt(Math.random() * 20, 10);
+
+                log_worker.add('debug', '请求数据', reqUrl);
+
+                c.queue({
+                    uri: reqUrl,
+                    userAgent: userAgent[numAgent],
+                    proxies: [e]
+                });
+                log_worker.add('debug', '代理地址', e);
+
+                cCount++;
+                log_worker.add('debug', '当前队列数量', cCount);
+
+                reqCount++;
+                log_worker.add('debug', '请求数量', reqCount);
+            }
+
         });
-        log_worker.add('debug', '代理地址', proxy);
     } else {
+
+        //获取目标地址
+        reqUrl = urlList.shift();
+
+        var numAgent = parseInt(Math.random() * 20, 10);
+
+        log_worker.add('debug', '请求数据', reqUrl);
+
         c.queue({
             uri: reqUrl,
             userAgent: userAgent[numAgent]
         });
+
+        cCount++;
+        log_worker.add('debug', '当前队列数量', cCount);
+
+        reqCount++;
+        log_worker.add('debug', '请求数量', reqCount);
     }
 
-    cCount++;
-    log_worker.add('debug', '当前队列数量', cCount);
-
-    reqCount++;
-    log_worker.add('debug', '请求数量', reqCount);
+    log_worker.add('info', 'fetcher', 'fetcher is ok');
+    setTimeout(begin_craw, parseInt(Math.random() * reqInterval, 10));
 }
 
 //目标地址不能少于最小值
@@ -380,17 +417,7 @@ url_worker.get(function (error, result) {
         queryUriCount = urlList.length;
         log_worker.add('debug', '目标地址数量', urlList.length);
 
-        log_worker.add('info', 'fetcher', 'ok');
-
-        if (isProxy) {
-
-//    遍历代理 forEach是函数
-            proxyList.forEach(function (proxy) {
-                begin_craw(proxy);
-            });
-        } else {
-            begin_craw();
-        }
+        setTimeout(begin_craw, parseInt(Math.random() * reqInterval, 10));
     }
 });
 
