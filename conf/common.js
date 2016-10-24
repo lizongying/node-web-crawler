@@ -20,6 +20,8 @@ Common.prototype = {
     reqInterval: 4000,//重新请求间隔 ms
     separator: '\r\n',
     isProxy: 1,//0 不使用代理 1 使用代理
+    host: 'book.douban.com',
+    referer: 'https://book.douban.com/',
     userAgent: [
         'Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.1.6) Gecko/20091201 Firefox/3.5.6',
         'Mozilla/5.0 (Windows NT 6.2) AppleWebKit/535.11 (KHTML, like Gecko) Chrome/17.0.963.12 Safari/535.11',

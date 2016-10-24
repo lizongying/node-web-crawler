@@ -27,6 +27,8 @@ var retryTimeout = conf.retryTimeout;//重试超时
 var reqInterval = conf.reqInterval;//重新请求间隔 ms
 var userAgent = conf.userAgent;// 随机页头
 var isProxy = conf.isProxy;//是否使用代理
+var host = conf.host;
+var referer = conf.referer;
 var proxyList = conf.proxyList;//代理地址列表
 
 var cCount = 0;//当前队列数量，不需要设置
@@ -36,6 +38,8 @@ var noneErrorCount = 0;//返回错误数量
 var noneErrorErrorCount = 0;//保存返回错误失败数量
 var noneErrorSuccessCount = 0;//保返回态错误成功数量
 var stateErrorCount = 0;//状态错误数量
+var stateErrorCount404 = 0;//状态404错误数量
+var stateErrorCount403 = 0;//状态403错误数量
 var stateErrorErrorCount = 0;//保存状态错误失败数量
 var stateErrorSuccessCount = 0;//保存状态错误成功数量
 var stateSuccessCount = 0;//状态正确数量
@@ -76,9 +80,6 @@ var c = new crawler({
         lastUrl = result.options.uri;
         createTime = (new Date()).getTime().toString().substr(0, 10);
 
-        // console.log(resultStatus);
-        var proxy = result.options.proxies[0];
-
         //检查是否结束
         if (rspCount === queryUriCount) {
             log_worker.add('info', 'work', '已结束');
@@ -90,6 +91,9 @@ var c = new crawler({
             // db.close();
         } else {
             if (isProxy) {
+                var proxy = result.options.proxies[0];
+                // console.log(proxy);
+
                 setTimeout(function () {
                     begin_craw(proxy);
                 }, parseInt(Math.random() * reqInterval, 10));
@@ -100,6 +104,8 @@ var c = new crawler({
             }
 
         }
+
+        log_worker.add('info', 'processor', resultStatus + '    ' + lastUrl);
 
         if (error) {
             noneErrorCount++;
@@ -121,7 +127,17 @@ var c = new crawler({
             return;
         }
 
-        if (resultStatus != 200) {
+        if (resultStatus !== 200) {
+            switch (resultStatus) {
+                case 404:
+                    stateErrorCount404++;
+                    break;
+                case 403:
+                    stateErrorCount403++;
+                    break;
+                default:
+                    break;
+            }
             stateErrorCount++;
             log_worker.add('debug', '状态错误数量', stateErrorCount);
             log_worker.add('debug', '状态错误', resultStatus);
@@ -308,7 +324,6 @@ var c = new crawler({
                 log_worker.add('debug', '保存状态正确成功数量', stateSuccessSuccessCount);
                 log_worker.add('debug', '保存状态正确成功', res.ops);
                 successUrl = lastUrl;
-                log_worker.add('info', 'processor', successUrl);
             }
         });
 
@@ -323,7 +338,7 @@ function begin_craw(proxy) {
 
     //检查目标地址是否存在，应该在获取目标地址之后执行爬取
     if (urlList.length < 1) {
-        log_worker.add('info', 'work', '目标地址已全部加入请求队列');
+        log_worker.add('info', 'fetcher', 'finished');
         return;
     }
 
@@ -338,9 +353,12 @@ function begin_craw(proxy) {
         c.queue({
             uri: reqUrl,
             userAgent: userAgent[numAgent],
-            proxies: [proxy]
+            proxies: [proxy],
+            host: host,
+            referer: referer
         });
         log_worker.add('debug', '代理地址', proxy);
+
     } else {
         c.queue({
             uri: reqUrl,
@@ -369,6 +387,8 @@ url_worker.get(function (error, result) {
     queryUrlSuccessCount++;
     log_worker.add('debug', '获取目标地址成功数量', queryUrlSuccessCount);
 
+    log_worker.add('info', 'scheduler', 'ok');
+
     if (error) {
         log_worker.add('debug', '获取目标地址错误', error.code);
     } else {
@@ -380,7 +400,7 @@ url_worker.get(function (error, result) {
         queryUriCount = urlList.length;
         log_worker.add('debug', '目标地址数量', urlList.length);
 
-        log_worker.add('info', 'fetcher', 'ok');
+        log_worker.add('info', 'fetcher', 'beginning');
 
         if (isProxy) {
 
@@ -434,6 +454,8 @@ app.get('/api', function (req, res) {
         noneErrorErrorCount: {info: '保存返回错误失败', val: noneErrorErrorCount},
         noneErrorSuccessCount: {info: '保存返回错误成功', val: noneErrorSuccessCount},
         stateErrorCount: {info: '状态错误数量', val: stateErrorCount},
+        stateErrorCount404: {info: '状态404错误数量', val: stateErrorCount404},
+        stateErrorCount403: {info: '状态403错误数量', val: stateErrorCount403},
         stateErrorErrorCount: {info: '保存状态错误失败', val: stateErrorErrorCount},
         stateErrorSuccessCount: {info: '保存状态错误成功', val: stateErrorSuccessCount},
         stateSuccessCount: {info: '状态成功数量', val: stateSuccessCount},

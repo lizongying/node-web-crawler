@@ -23,6 +23,8 @@ function Config() {
     this.separator = conf.separator;//分隔符
     this.userAgent = conf.userAgent;// 随机页头
     this.isProxy = conf.isProxy;// 是否使用代理
+    this.host = conf.host;
+    this.referer = conf.referer;
     this.proxyList = conf.proxyList;//代理地址列表
     this.mysqlHost = conf.mysqlHost;//mysql地址
     this.mysqlPort = conf.mysqlPort;//mysq端口
