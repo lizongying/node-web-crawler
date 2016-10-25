@@ -102,7 +102,6 @@ var c = new crawler({
                     begin_craw();
                 }, parseInt(Math.random() * reqInterval, 10));
             }
-
         }
 
         log_worker.add('info', 'processor', resultStatus + '    ' + lastUrl);
