@@ -110,7 +110,7 @@ var c = new crawler({
         if (error) {
             noneErrorCount++;
             log_worker.add('debug', '返回错误数量', noneErrorCount);
-            log_worker.add('error', '返回错误', error);
+            log_worker.add('error', '返回错误', proxy + '   ' + error);
 
             result_worker.error(resultStatus, lastUrl, createTime, function (err, res) {
                 if (err) {
