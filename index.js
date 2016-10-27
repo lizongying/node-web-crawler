@@ -94,9 +94,7 @@ var c = new crawler({
                 var proxy = result.options.proxies[0];
                 // console.log(proxy);
 
-                setTimeout(function () {
                     begin_craw(proxy);
-                }, parseInt(Math.random() * reqInterval, 10));
             } else {
                 setTimeout(function () {
                     begin_craw();
