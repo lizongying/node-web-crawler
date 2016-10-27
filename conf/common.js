@@ -10,7 +10,7 @@ Common.prototype = {
     serverCurrent: 0,//当前服务器 （从0开始），必须设置
     resultTable: 'srf_book_info',//表
     uri: 'https://book.douban.com/subject/',//目标地址
-    pushBegin: 20003333,//开始id，包括 (全部服务器)
+    pushBegin: 20824100,//开始id，包括 (全部服务器)
     pushEnd: 25000000,//结束id，不包括 (全部服务器)
     uriCountMin: 1,//目标地址数量最小值
     maxConnections: 50,//最大连接
