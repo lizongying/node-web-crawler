@@ -470,7 +470,7 @@ app.get('/api', function (req, res) {
     }
 });
 
-var pathname = __dirname + 'web';
+var pathname = __dirname + '/web';
 
 app.use(express.static(pathname));
 
