@@ -470,6 +470,10 @@ app.get('/api', function (req, res) {
     }
 });
 
+var pathname = __dirname + 'web';
+
+app.use(express.static(pathname));
+
 app.listen(3000, function () {
     log_worker.add('info', 'webUi', 'app is listening at port 3000');
 });
