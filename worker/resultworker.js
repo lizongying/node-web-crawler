@@ -12,28 +12,28 @@ var logWorker = require('./logworker');
 var log_worker = new logWorker(); //log
 
 //连接mysql
-//var db = new dao['mysql']();
-//var mysqlConf = {
-//    host: mysqlHost,
-//    port: mysqlPort,
-//    user: mysqlUser,
-//    password: mysqlPassword,
-//    database: mysqlDatabase
-//};
-//
-//db.init(mysqlConf);
+var db = new dao['mysql']();
+var mysqlConf = {
+   host: mysqlHost,
+   port: mysqlPort,
+   user: mysqlUser,
+   password: mysqlPassword,
+   database: mysqlDatabase
+};
+
+db.init(mysqlConf);
 
 //写入文件
 // var file = new dao['file']();
 // file.init(__dirname);
 
 //连接mongodb
-var mg = new dao['mongodb']();
-var mongodbConf = {
-    host: conf.mongodbHost,
-    port: conf.mongodbPort,
-    database: conf.mongodbDatabase
-};
+// var mg = new dao['mongodb']();
+// var mongodbConf = {
+//     host: conf.mongodbHost,
+//     port: conf.mongodbPort,
+//     database: conf.mongodbDatabase
+// };
 
 mg.init(mongodbConf, function (err) {
     if (err) {
@@ -256,11 +256,11 @@ ResultWorker.prototype.success = function (resultData, resultStatus, lastUrl, cr
     //});
 
     //mongodb
-    var mongodbParams = resultData;
-
-    mg.add(this.resultTable, mongodbParams, function (err, res) {
-        callback(err, res);
-    });
+    // var mongodbParams = resultData;
+    //
+    // mg.add(this.resultTable, mongodbParams, function (err, res) {
+    //     callback(err, res);
+    // });
 };
 
 exports = module.exports = ResultWorker;

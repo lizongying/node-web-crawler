@@ -5,7 +5,7 @@ var crawler = require('crawler');
 var express = require('express');
 
 var logWorker = require('./worker/logworker');
-var urlWorker = require('./worker/urlworker');
+var urlWorker = require('./worker/dburlworker');
 var resultWorker = require('./worker/resultworker');
 
 require('./lib/array.js');

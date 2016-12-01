@@ -8,7 +8,7 @@ function Common() {
 Common.prototype = {
     serverCount: 1,//服务器数量 默认5，必须设置
     serverCurrent: 0,//当前服务器 （从0开始），必须设置
-    resultTable: 'srf_book_info',//表
+    resultTable: 'srf_book_img',//表
     uri: 'https://book.douban.com/subject/',//目标地址
     pushBegin: 20824100,//开始id，包括 (全部服务器)
     pushEnd: 25000000,//结束id，不包括 (全部服务器)
@@ -19,7 +19,7 @@ Common.prototype = {
     retryTimeout: 10000,//重试超时（ms）默认10000
     reqInterval: 0,//重新请求间隔 ms
     separator: '\r\n',
-    isProxy: 1,//0 不使用代理 1 使用代理
+    isProxy: 0,//0 不使用代理 1 使用代理
     host: 'book.douban.com',
     referer: 'https://book.douban.com/',
     userAgent: [
