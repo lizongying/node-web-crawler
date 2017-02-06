@@ -8,6 +8,8 @@ var common = require('./common');
 function Mongodb() {
     this._host = null;//数据库地址
     this._port = null;//数据库端口
+    this._user = null;//数据库用户名
+    this._password = null;//数据库密码
     this._database = null;//数据库
     this._client = null;
 }
@@ -25,6 +27,8 @@ Mongodb.prototype.init = function (conf, callback) {
     //创建连接
     var host = conf.host ? conf.host : this._host;
     var port = conf.port ? conf.port : this._port;
+    var user = conf.user ? conf.user : this._user;
+    var password = conf.password ? conf.password : this._password;
     var database = conf.database ? conf.database : this._database;
     //var server = new mongodb.Server(host, port, {auto_reconnect: true});
     //this._client = new mongodb.Db(database, server, {salf: true});
@@ -52,7 +56,7 @@ Mongodb.prototype.add = function (col, params, callback) {
     // Get the documents collection
     var collection = Mongodb._client.collection(col);
     // Insert some documents
-    collection.insert(params, function(error, result) {
+    collection.insert(params, function (error, result) {
         //console.log("Inserted 3 documents into the collection");
         callback(error, result);
     });

@@ -4,9 +4,10 @@
 var util = require('util');
 var common = require('./common');
 
-function Production() {}
+function Production() {
+}
 
-Production.prototype= {
+Production.prototype = {
     mysqlHost: 'rds33114q0a6t32npf55.mysql.rds.aliyuncs.com',//mysql地址
     mysqlPort: 3306,//mysql端口
     mysqlUser: 'shurufa',//mysql用户名
@@ -14,6 +15,8 @@ Production.prototype= {
     mysqlDatabase: 'srf',//mysql数据库
     mongodbHost: '127.0.0.1',//mongodb地址
     mongodbPort: 27017,//mongodb端口
+    mongodbUser: 'shurufa',//mongodb用户名
+    mongodbPassword: 'Shurufame302',//mongodb密码
     mongodbDatabase: 'douban'//mongodb数据库
 };
 

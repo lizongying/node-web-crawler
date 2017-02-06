@@ -21,8 +21,8 @@ function Config() {
     this.retryTimeout = conf.retryTimeout;//重试超时
     this.reqInterval = conf.reqInterval;//重新请求间隔 ms
     this.separator = conf.separator;//分隔符
-    this.userAgent = conf.userAgent;// 随机页头
-    this.isProxy = conf.isProxy;// 是否使用代理
+    this.userAgent = conf.userAgent;//随机页头
+    this.isProxy = conf.isProxy;//是否使用代理
     this.host = conf.host;
     this.referer = conf.referer;
     this.proxyList = conf.proxyList;//代理地址列表
@@ -33,6 +33,8 @@ function Config() {
     this.mysqlDatabase = conf.mysqlDatabase;//mysql数据库
     this.mongodbHost = conf.mongodbHost;//mongodb地址
     this.mongodbPort = conf.mongodbPort;//mongodb端口
+    this.mongodbUser = conf.mongodbUser;//mongodb用户名
+    this.mongodbPassword = conf.mongodbPassword;//mongodb密码
     this.mongodbDatabase = conf.mongodbDatabase;//mongodb数据库
 }
 
