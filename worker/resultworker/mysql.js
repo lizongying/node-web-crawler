@@ -1,24 +1,25 @@
 /**
  * Created by michael on 2016-10-17.
  */
-
-var config = require('../conf/config');
-
+var config = require('../../conf/config');
 var conf = new config();
 
-var dao = require('../dao/');
+var dao = require('../../dao/');
 
-var logWorker = require('./logworker');
-var log_worker = new logWorker(); //log
+var mongodbHost = conf.mongodbHost;
+var mongodbPort = conf.mongodbPort;
+var mongodbUser = conf.mongodbUser;
+var mongodbPassword = conf.mongodbPassword;
+var mongodbDatabase = conf.mongodbDatabase;
 
 //连接mysql
 var db = new dao['mysql']();
 var mysqlConf = {
-   host: mysqlHost,
-   port: mysqlPort,
-   user: mysqlUser,
-   password: mysqlPassword,
-   database: mysqlDatabase
+    host: mysqlHost,
+    port: mysqlPort,
+    user: mysqlUser,
+    password: mysqlPassword,
+    database: mysqlDatabase
 };
 
 db.init(mysqlConf);
@@ -27,13 +28,15 @@ db.init(mysqlConf);
 // var file = new dao['file']();
 // file.init(__dirname);
 
-//连接mongodb
-// var mg = new dao['mongodb']();
-// var mongodbConf = {
-//     host: conf.mongodbHost,
-//     port: conf.mongodbPort,
-//     database: conf.mongodbDatabase
-// };
+// 连接mongodb
+var mg = new dao['mongodb']();
+var mongodbConf = {
+    host: conf.mongodbHost,
+    port: conf.mongodbPort,
+    user: conf.mongodbUser,
+    password: conf.mongodbPassword,
+    database: conf.mongodbDatabase
+};
 
 mg.init(mongodbConf, function (err) {
     if (err) {

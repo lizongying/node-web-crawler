@@ -6,6 +6,9 @@ function Common() {
 }
 
 Common.prototype = {
+    urlWorker: 'mysql',//地址worker
+    resultWorker: 'mongodb',//结果worker
+    logWorker: 'file',//日志worker
     serverCount: 1,//服务器数量 默认5，必须设置
     serverCurrent: 0,//当前服务器 （从0开始），必须设置
     resultTable: 'srf_book_img',//表
