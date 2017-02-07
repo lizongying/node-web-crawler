@@ -7,10 +7,12 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
+    "colors": "^1.1.2",
     "crawler": "~0.4.3",
     "express": "^4.14.0",
     "mongodb": "~2.2.8",
-    "mysql": "~2.11.1"
+    "mysql": "~2.11.1",
+    "q": "^1.4.1"
   },
   "repository": {
     "type": "git",

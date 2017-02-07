@@ -1,24 +1,54 @@
 /**
  * Created by michael on 2016-10-17.
  */
+var colors = require('colors');
+var Q = require('q');
+
 var config = require('../../conf/config');
 var conf = new config();
+
+var logWorker = conf.logWorker;//日志worker，必须设置
+
+// 日志worker
+var lWorker = require('../logworker/' + logWorker);
+var log_worker = new lWorker();
 
 var dao = require('../../dao/');
 
 //连接mysql
 var db = new dao['mysql']();
 var mysqlConf = {
-   host: conf.mysqlHost,
-   port: conf.mysqlPort,
-   user: conf.mysqlUser,
-   password: conf.mysqlPassword,
-   database: conf.mysqlDatabase
+    host: conf.mysqlHost,
+    port: conf.mysqlPort,
+    user: conf.mysqlUser,
+    password: conf.mysqlPassword,
+    database: conf.mysqlDatabase
 };
 
-db.init(mysqlConf);
-console.log(mysqlConf);
-console.log(db);
+var ci = function () {
+    var deferred = Q.defer();
+    db.init(mysqlConf, function (err, res) {
+        if (err) {
+            // console.log(err);
+            deferred.reject(new Error(err));
+        } else {
+            // console.log(res);
+            deferred.resolve(res);
+        }
+    });
+    return deferred.promise;
+};
+
+ci()
+    .then(function (res) {
+        // console.log(res.green);
+    })
+    .catch(function (err) {
+        // console.log(err.red);
+    })
+    .done();
+// console.log(mysqlConf);
+// console.log(db);
 
 var urlList = [];
 
@@ -43,7 +73,7 @@ UrlWorker.prototype.get = function (callback) {
     var tableUrl = 'srf_crawler_url';
     var querySql = 'SELECT url FROM ' + tableUrl + ' ' +
         'WHERE mod(id, ' + this.serverCount + ') = ' + this.serverCurrent + ' ORDER BY url ASC';
-    // crawler_log('debug', '获取目标地址语句', querySql);
+    log_worker.add('debug', '获取目标地址语句', querySql);
 
     db.query(querySql, function (err, res) {
         if (err) {

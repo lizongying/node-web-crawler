@@ -7,6 +7,9 @@ var crawler = require('crawler');
 // web
 var express = require('express');
 
+var colors = require('colors');
+var Q = require('q');
+
 // 拓展
 require('./lib/array.js');
 require('./lib/date.js');
@@ -69,7 +72,7 @@ var log_worker = new lWorker();
 
 // 地址worker
 var uWorker = require('./worker/urlworker/' + urlWorker);
-var url_worker = new uWorker();
+var url_worker = Q(new uWorker());
 
 // 结果worker
 var rWorker = require('./worker/resultworker/' + resultWorker);
@@ -390,37 +393,42 @@ if (pushEnd - pushBegin < uriCountMin) {
 
 beginTime = new Date();
 
-url_worker.get(function (error, result) {
-    reqState = '运行中';
+url_worker.then(function (u) {
 
-    queryUrlSuccessCount++;
-    log_worker.add('debug', '获取目标地址成功数量', queryUrlSuccessCount);
+    u.get(function (error, result) {
+        reqState = '运行中';
 
-    log_worker.add('info', 'scheduler', 'ok');
+        queryUrlSuccessCount++;
+        log_worker.add('debug', '获取目标地址成功数量', queryUrlSuccessCount);
 
-    if (error) {
-        log_worker.add('debug', '获取目标地址错误', error.code);
-    } else {
-        urlList = result;
+        log_worker.add('info', 'scheduler', 'ok');
 
-        beginUrl = urlList[0];
-        endUrl = urlList[urlList.length - 1];
+        if (error) {
+            log_worker.add('debug', '获取目标地址错误', error.code);
+        } else {
+            urlList = result;
 
-        queryUriCount = urlList.length;
-        log_worker.add('debug', '目标地址数量', urlList.length);
+            beginUrl = urlList[0];
+            endUrl = urlList[urlList.length - 1];
 
-        log_worker.add('info', 'fetcher', 'beginning');
+            queryUriCount = urlList.length;
+            log_worker.add('debug', '目标地址数量', urlList.length);
 
-        if (isProxy) {
+            log_worker.add('info', 'fetcher', 'beginning');
+
+            if (isProxy) {
 
 //    遍历代理 forEach是函数
-            proxyList.forEach(function (proxy) {
-                begin_craw(proxy);
-            });
-        } else {
-            begin_craw();
+                proxyList.forEach(function (proxy) {
+                    begin_craw(proxy);
+                });
+            } else {
+                begin_craw();
+            }
         }
-    }
+    });
+    console.log(u);
+    console.log('##################################################');
 });
 
 var app = express();
