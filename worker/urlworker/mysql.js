@@ -1,23 +1,24 @@
 /**
  * Created by michael on 2016-10-17.
  */
-var config = require('../conf/config');
+var config = require('../../conf/config');
 var conf = new config();
 
-
-var dao = require('../dao/');
+var dao = require('../../dao/');
 
 //连接mysql
 var db = new dao['mysql']();
 var mysqlConf = {
-   host: mysqlHost,
-   port: mysqlPort,
-   user: mysqlUser,
-   password: mysqlPassword,
-   database: mysqlDatabase
+   host: conf.mysqlHost,
+   port: conf.mysqlPort,
+   user: conf.mysqlUser,
+   password: conf.mysqlPassword,
+   database: conf.mysqlDatabase
 };
 
 db.init(mysqlConf);
+console.log(mysqlConf);
+console.log(db);
 
 var urlList = [];
 

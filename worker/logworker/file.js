@@ -2,13 +2,13 @@
  * Created by michael on 2016-10-17.
  */
 
-var config = require('../conf/config');
+var config = require('../../conf/config');
 var conf = new config();
 
-var dao = require('../dao/');
+var dao = require('../../dao/');
 var path = require('path');
 
-require('../lib/date.js');
+require('../../lib/date.js');
 
 //写入文件
 var file = new dao['file']();

@@ -1,19 +1,23 @@
 /**
  * Created by michael on 2016-08-11.
  */
+// 请求
 var crawler = require('crawler');
+
+// web
 var express = require('express');
 
-var logWorker = require('./worker/logworker');
-var urlWorker = require('./worker/dburlworker');
-var resultWorker = require('./worker/resultworker');
-
+// 拓展
 require('./lib/array.js');
 require('./lib/date.js');
 
+// 设置
 var config = require('./conf/config');
 var conf = new config();
 
+var urlWorker = conf.urlWorker;//地址worker，必须设置
+var resultWorker = conf.resultWorker;//结果worker，必须设置
+var logWorker = conf.logWorker;//日志worker，必须设置
 var serverCount = conf.serverCount;//服务器数量，必须设置
 var serverCurrent = conf.serverCurrent;//当前服务器 （从0开始），必须设置
 var uri = conf.uri;//目标地址
@@ -59,9 +63,17 @@ var successUrl = '';//最后成功url
 var beginUrl = '';//开始的url
 var endUrl = '';//结束的url
 
-var log_worker = new logWorker(); //log
-var url_worker = new urlWorker(); //获取地址
-var result_worker = new resultWorker(); //保存结果
+// 日志worker
+var lWorker = require('./worker/logworker/' + logWorker);
+var log_worker = new lWorker();
+
+// 地址worker
+var uWorker = require('./worker/urlworker/' + urlWorker);
+var url_worker = new uWorker();
+
+// 结果worker
+var rWorker = require('./worker/resultworker/' + resultWorker);
+var result_worker = new rWorker();
 
 var c = new crawler({
     maxConnections: maxConnections,
@@ -94,7 +106,7 @@ var c = new crawler({
                 var proxy = result.options.proxies[0];
                 // console.log(proxy);
 
-                    begin_craw(proxy);
+                begin_craw(proxy);
             } else {
                 setTimeout(function () {
                     begin_craw();

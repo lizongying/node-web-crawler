@@ -3,11 +3,14 @@
  */
 var config = require(__dirname);
 
-var env = 'production';//环境 test或production
+var env = 'test';//环境 test或production
 var conf = new config[env]();
 
 function Config() {
     this.env = env;
+    this.urlWorker = conf.urlWorker;//地址worker
+    this.resultWorker = conf.resultWorker;//结果worker
+    this.logWorker = conf.logWorker;//日志worker
     this.serverCount = conf.serverCount;//服务器数量，必须设置
     this.serverCurrent = conf.serverCurrent;//当前服务器 （从0开始），必须设置
     this.resultTable = conf.resultTable;//表
