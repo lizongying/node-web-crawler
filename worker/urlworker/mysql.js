@@ -25,31 +25,6 @@ var mysqlConf = {
     database: conf.mysqlDatabase
 };
 
-var ci = function () {
-    var deferred = Q.defer();
-    db.init(mysqlConf, function (err, res) {
-        if (err) {
-            // console.log(err);
-            deferred.reject(new Error(err));
-        } else {
-            // console.log(res);
-            deferred.resolve(res);
-        }
-    });
-    return deferred.promise;
-};
-
-ci()
-    .then(function (res) {
-        // console.log(res.green);
-    })
-    .catch(function (err) {
-        // console.log(err.red);
-    })
-    .done();
-// console.log(mysqlConf);
-// console.log(db);
-
 var urlList = [];
 
 //获取目标地址
@@ -61,51 +36,88 @@ function UrlWorker(env, serverCount, serverCurrent, pushBegin, pushEnd, uri) {
     this.uri = uri ? uri : conf.uri;
 }
 
-UrlWorker.prototype.get = function (callback) {
+UrlWorker.prototype.init = function (s, e, callback) {
+    var deferred = Q.defer();
+    var ce = null;
+    var cs = null;
+    db.init(mysqlConf, '数据库初始化成功', '数据库初始化失败')
+        .then(function (result) {
+            cs = result;
+            console.log(s.green);
+            // console.log(result);
+            deferred.resolve(result);
+        })
+        .catch(function (error) {
+            ce = error;
+            console.log(e.red);
+            // console.log(error);
+            deferred.reject(new Error(error));
+        })
+        .done();
+
+    return callback ? deferred.promise.nodeify(callback(ce, cs)) : deferred.promise;
+};
+
+UrlWorker.prototype.get = function (s, e, callback) {
+    var deferred = Q.defer();
+    var ce = null;
+    var cs = null;
     var error = null;
 
     if (typeof(this.serverCount) === 'undefined' || this.serverCount < 1 || typeof(this.serverCurrent) === 'undefined') {
         error = {code: 0, message: '服务器配置错误'};
-        callback('error');
-        return;
+        ce = error;
+        console.log(e.red);
+        deferred.reject(new Error(error));
+        return callback ? deferred.promise.nodeify(callback(ce, cs)) : deferred.promise;
     }
 
-    var tableUrl = 'srf_crawler_url';
+    var tableUrl = 'url';
     var querySql = 'SELECT url FROM ' + tableUrl + ' ' +
         'WHERE mod(id, ' + this.serverCount + ') = ' + this.serverCurrent + ' ORDER BY url ASC';
-    log_worker.add('debug', '获取目标地址语句', querySql);
+    // log_worker.add('debug', '获取目标地址语句', querySql);
 
-    db.query(querySql, function (err, res) {
-        if (err) {
-            queryUrlErrorCount++;
-            crawler_log('debug', '获取目标地址错误数量', queryUrlErrorCount);
-            crawler_log('error', '获取目标地址错误', err);
-            return;
-        }
-        if (res.length > 0) {
-            queryUrlSuccessCount++;
-            crawler_log('debug', '获取目标地址成功数量', queryUrlSuccessCount);
+    db.query(querySql, '获取目标地址成功', '获取目标地址失败')
+        .then(function (result) {
 
+            var urlList = [];
+            if (result.length > 0) {
 
-            for (var i = 0; i < res.length; i++) {
-                var url = res[i].url;
-                urlList.push(url);
+                for (var i = 0; i < result.length; i++) {
+                    var url = result[i].url;
+                    urlList.push(url);
+                }
+
+                cs = urlList;
+                console.log(s.green);
+                // console.log(urlList);
+                deferred.resolve(urlList);
+
+                // //urlList.sort();
+                // beginUrl = urlList[0];
+                // endUrl = urlList[urlList.length - 1];
+                //
+                // queryUriCount = urlList.length;
+                // crawler_log('debug', '目标地址数量', urlList.length);
+                //
+                // begin_craw();
+            } else {
+                error = '结果为空';
+                ce = error;
+                console.log(e.red);
+                deferred.reject(new Error(error));
+                //重新获取
+                //setTimeout(add_id, addIDInterval);
             }
-
-            //urlList.sort();
-            beginUrl = urlList[0];
-            endUrl = urlList[urlList.length - 1];
-
-            queryUriCount = urlList.length;
-            crawler_log('debug', '目标地址数量', urlList.length);
-
-            begin_craw();
-        } else {
-
-            //重新获取
-            //setTimeout(add_id, addIDInterval);
-        }
-    });
+        })
+        .catch(function (error) {
+            ce = error;
+            console.log(e.red);
+            // console.log(error);
+            deferred.reject(new Error(error));
+        })
+        .done();
+    return callback ? deferred.promise.nodeify(callback(ce, cs)) : deferred.promise;
 
     for (var i = this.pushBegin; i < this.pushEnd; i++) {
         var isServer = i % this.serverCount;

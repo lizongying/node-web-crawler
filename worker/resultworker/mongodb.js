@@ -1,6 +1,9 @@
 /**
  * Created by michael on 2016-10-17.
  */
+var colors = require('colors');
+var Q = require('q');
+
 var config = require('../../conf/config');
 var conf = new config();
 
@@ -16,16 +19,31 @@ var mongodbConf = {
     database: conf.mongodbDatabase
 };
 
-mg.init(mongodbConf, function (err) {
-    if (err) {
-        log_worker.add('error', 'mongodb初始化错误', err);
-        return;
-    }
-});
-
 function ResultWorker(resultTable) {
     this.resultTable = resultTable ? resultTable : conf.resultTable;//表
 }
+
+ResultWorker.prototype.init = function (s, e, callback) {
+    var deferred = Q.defer();
+    var ce = null;
+    var cs = null;
+    mg.init(mongodbConf, 'mongodb初始化成功', 'mongodb初始化失败')
+        .then(function (result) {
+            cs = result;
+            console.log(s.green);
+            // console.log(result);
+            deferred.resolve(result);
+        })
+        .catch(function (error) {
+            ce = error;
+            console.log(e.red);
+            // console.log(error);
+            deferred.reject(new Error(error));
+        })
+        .done();
+
+    return callback ? deferred.promise.nodeify(callback(ce, cs)) : deferred.promise;
+};
 
 ResultWorker.prototype.error = function (resultStatus, lastUrl, createTime, callback) {
     var douban_id = lastUrl.replace(/[^0-9]/ig, '');

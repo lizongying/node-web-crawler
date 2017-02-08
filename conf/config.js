@@ -11,6 +11,7 @@ function Config() {
     this.urlWorker = conf.urlWorker;//地址worker
     this.resultWorker = conf.resultWorker;//结果worker
     this.logWorker = conf.logWorker;//日志worker
+    this.processor = conf.processor;//内容处理
     this.serverCount = conf.serverCount;//服务器数量，必须设置
     this.serverCurrent = conf.serverCurrent;//当前服务器 （从0开始），必须设置
     this.resultTable = conf.resultTable;//表
