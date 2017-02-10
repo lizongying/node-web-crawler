@@ -7,20 +7,25 @@ var Q = require('q');
 var config = require('../../conf/config');
 var conf = new config();
 
+var path = require('path');
 var dao = require('../../dao/');
 
-// 连接mongodb
-var mg = new dao['mongodb']();
+//写入文件
+var file = new dao['file']();
 
-function ResultWorker(resultTable) {
+function ResultWorker(resultTable,separator) {
     this._resultTable = resultTable;//结果表
+    this._separator = separator;
 }
 
 ResultWorker.prototype.init = function (s, e, callback) {
     var deferred = Q.defer();
     var ce = null;
     var cs = null;
-    mg.connect('连接成功', '连接失败')
+    this._resultTable = this._resultTable ? this._resultTable : conf.resultTable;
+    this._separator = this._separator ? this._separator:conf.separator;
+
+    file.init(__dirname, '连接成功', '连接失败')
         .then(function (result) {
             cs = result;
             console.log(s.green);
@@ -38,14 +43,13 @@ ResultWorker.prototype.init = function (s, e, callback) {
     return callback ? deferred.promise.nodeify(callback(ce, cs)) : deferred.promise;
 };
 
-ResultWorker.prototype.error = function (resultData, s,e, callback) {
+ResultWorker.prototype.error = function (resultData, s, e, callback) {
     var deferred = Q.defer();
     var ce = null;
     var cs = null;
-    //mongodb
+    var logPath = path.resolve('data', this._resultTable + '.txt');//文件名
     var mongodbParams = resultData;
-    this._resultTable = this._resultTable ? this._resultTable : conf.resultTable;
-    mg.add(this._resultTable, mongodbParams, '插入成功', '插入失败')
+    file.add(logPath, mongodbParams, this._separator, '插入成功', '插入失败')
         .then(function (result) {
             cs = result;
             console.log(s.green);
@@ -63,14 +67,13 @@ ResultWorker.prototype.error = function (resultData, s,e, callback) {
     return callback ? deferred.promise.nodeify(callback(ce, cs)) : deferred.promise;
 };
 
-ResultWorker.prototype.false = function (resultData, s,e,  callback) {
+ResultWorker.prototype.false = function (resultData, s, e, callback) {
     var deferred = Q.defer();
     var ce = null;
     var cs = null;
-    //mongodb
+    var logPath = path.resolve('data', this._resultTable + '.txt');//文件名
     var mongodbParams = resultData;
-    this._resultTable = this._resultTable ? this._resultTable : conf.resultTable;
-    mg.add(this._resultTable, mongodbParams, '插入成功', '插入失败')
+    file.add(logPath, mongodbParams, this._separator, '插入成功', '插入失败')
         .then(function (result) {
             cs = result;
             console.log(s.green);
@@ -88,14 +91,13 @@ ResultWorker.prototype.false = function (resultData, s,e,  callback) {
     return callback ? deferred.promise.nodeify(callback(ce, cs)) : deferred.promise;
 };
 
-ResultWorker.prototype.success = function (resultData, s,e, callback) {
+ResultWorker.prototype.success = function (resultData, s, e, callback) {
     var deferred = Q.defer();
     var ce = null;
     var cs = null;
-    //mongodb
+    var logPath = path.resolve('data', this._resultTable + '.txt');//文件名
     var mongodbParams = resultData;
-    this._resultTable = this._resultTable ? this._resultTable : conf.resultTable;
-    mg.add(this._resultTable, mongodbParams, '插入成功', '插入失败')
+    file.add(logPath, mongodbParams, this._separator, '插入成功', '插入失败')
         .then(function (result) {
             cs = result;
             console.log(s.green);

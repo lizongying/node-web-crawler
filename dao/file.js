@@ -5,31 +5,57 @@ var utils = require('util');
 var fs = require('fs');
 var _ = require('lodash');
 var common = require('./common');
+var colors = require('colors');
+var Q = require('q');
 
 function File() {
-    this._path = '';
 }
 
 utils.inherits(File, common);
 
-File.prototype.init = function (path) {
-    //console.log(path);
+File.prototype.init = function (path, s, e, callback) {
 
-    this._path = path;
-    //console.log('file init');
+    console.log(path);
+    console.log(s);
+    console.log(e);
+    var deferred = Q.defer();
+    var ce = null;
+    var cs = null;
+
+    // TODO 增加写入权限
+
+    cs = s;
+    console.log(s.green);
+    deferred.resolve(this._client);
+
+    return callback ? deferred.promise.nodeify(callback(ce, cs)) : deferred.promise;
 };
 
 //增加
-File.prototype.add = function (file, params, separator, callback) {
-    //console.log(file);
-    //console.log(params);
-    var uri = this._path + file;
-    var str = _.isString(params) ? params : 'none';
+File.prototype.add = function (file, params, separator, s, e, callback) {
+    var deferred = Q.defer();
+    var ce = null;
+    var cs = null;
+
+    var str = _.isString(params) ? params : JSON.stringify(params);
     str = str + separator;
-    fs.appendFile(uri, str, function (err) {
-        callback(err);
+
+    fs.appendFile(file, str, function (error, result) {
+        if (error) {
+            ce = error;
+            console.log(e.red);
+            // console.log(error);
+            deferred.reject(new Error(error));
+        } else {
+            cs = result;
+            console.log(s.green);
+            // console.log(result);
+            deferred.resolve(result);
+        }
     });
-    //console.log('file add');
+
+    return callback ? deferred.promise.nodeify(callback(ce, cs)) : deferred.promise;
+
 };
 
 exports = module.exports = File;

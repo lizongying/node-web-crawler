@@ -7,12 +7,15 @@ function Common() {
 
 Common.prototype = {
     urlWorker: 'mysql',//地址worker
-    resultWorker: 'mongodb',//结果worker
-    logWorker: 'file',//日志worker
+    resultWorker: 'file',//结果worker
+    logWorker: 'none',//日志worker
     processor: 'douban',//内容处理
+    database: 'node_web_crawler',//数据库
+    urlTable: 'url',//地址表
+    resultTable: 'result',//结果表
+    isDownload: '',//是否作为文件下载 1 0 'auto'
     serverCount: 1,//服务器数量 默认5，必须设置
     serverCurrent: 0,//当前服务器 （从0开始），必须设置
-    resultTable: 'srf_book_img',//表
     uri: 'https://book.douban.com/subject/',//目标地址
     pushBegin: 20824100,//开始id，包括 (全部服务器)
     pushEnd: 25000000,//结束id，不包括 (全部服务器)
@@ -26,6 +29,14 @@ Common.prototype = {
     isProxy: 0,//0 不使用代理 1 使用代理
     host: 'book.douban.com',
     referer: 'https://book.douban.com/',
+    ext:[
+        '.png',
+        '.jpg',
+        '.gif',
+        '.PNG',
+        '.JPG',
+        '.GIF'
+    ],//作为文件下载 请先设置isDownload
     userAgent: [
         'Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.1.6) Gecko/20091201 Firefox/3.5.6',
         'Mozilla/5.0 (Windows NT 6.2) AppleWebKit/535.11 (KHTML, like Gecko) Chrome/17.0.963.12 Safari/535.11',

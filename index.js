@@ -9,10 +9,14 @@ var express = require('express');
 
 var colors = require('colors');
 var Q = require('q');
+var uuidV4 = require('uuid/v4');
+var path = require('path');
 
 // 拓展
 require('./lib/array.js');
 require('./lib/date.js');
+require('./lib/string.js');
+require('./lib/number.js');
 
 // 设置
 var config = require('./conf/config');
@@ -22,6 +26,8 @@ var urlWorker = conf.urlWorker;//地址worker，必须设置
 var resultWorker = conf.resultWorker;//结果worker，必须设置
 var logWorker = conf.logWorker;//日志worker，必须设置
 var processor = conf.processor;//内容处理，必须设置
+var isDownload = conf.isDownload;//是否作为文件下载
+var ext = conf.ext;
 var serverCount = conf.serverCount;//服务器数量，必须设置
 var serverCurrent = conf.serverCurrent;//当前服务器 （从0开始），必须设置
 var uri = conf.uri;//目标地址
@@ -89,7 +95,6 @@ var c = new crawler({
     retries: retries,
     retryTimeout: retryTimeout,
     callback: function (error, result, $) {
-
         cCount--;
         log_worker.add('debug', '当前队列数量', cCount);
 
@@ -114,7 +119,7 @@ var c = new crawler({
                 var proxy = result.options.proxies[0];
                 // console.log(proxy);
 
-                begin_craw(proxy);
+                // begin_craw(proxy);
             } else {
                 // setTimeout(function () {
                 //     begin_craw();
@@ -128,8 +133,14 @@ var c = new crawler({
             noneErrorCount++;
             log_worker.add('debug', '返回错误数量', noneErrorCount);
             log_worker.add('error', '返回错误', proxy + '   ' + error);
-
-            result_worker.error(resultStatus, lastUrl, createTime, function (err, res) {
+            resultData = {
+                url: lastUrl,
+                result: {},
+                created_at: createTime,
+                updated_at: createTime,
+                state: resultStatus
+            };
+            result_worker.error(resultData, lastUrl, createTime, function (err, res) {
                 if (err) {
                     noneErrorErrorCount++;
                     log_worker.add('debug', '保存返回错误失败数量', noneErrorErrorCount);
@@ -159,7 +170,14 @@ var c = new crawler({
             log_worker.add('debug', '状态错误数量', stateErrorCount);
             log_worker.add('debug', '状态错误', resultStatus);
 
-            result_worker.false(resultStatus, lastUrl, createTime, function (err, res) {
+            resultData = {
+                url: lastUrl,
+                result: {},
+                created_at: createTime,
+                updated_at: createTime,
+                state: resultStatus
+            };
+            result_worker.false(resultData, '保存成功', '保存失败', function (err, res) {
                 if (err) {
                     stateErrorErrorCount++;
                     log_worker.add('debug', '保存状态错误失败数量', stateErrorErrorCount);
@@ -174,16 +192,35 @@ var c = new crawler({
             return;
         }
 
-        // console.log($("body").html());
+        // 如果有path就是文件
+        if (result.options.savePath) {
+            resultData = {
+                url: lastUrl,
+                result: {
+                    save_path: result.options.savePath
+                },
+                created_at: createTime,
+                updated_at: createTime,
+                state: resultStatus
+            };
+        } else {
+            processor_worker.handle(result, $, function (err, res) {
+                if (res) {
+                    // console.log(res);
+                    resultData = {
+                        url: lastUrl,
+                        result: res,
+                        created_at: createTime,
+                        updated_at: createTime,
+                        state: resultStatus
+                    };
+                } else {
+                    resultData = {};
+                }
+            });
+        }
 
-        processor_worker.opt(result, $, function (err, res) {
-            if (res) {
-                console.log(res);
-                resultData = res;
-            }
-        });
-
-        result_worker.success(resultData, resultStatus, lastUrl, createTime, function (err, res) {
+        result_worker.success(resultData, '保存成功', '保存失败', function (err, res) {
             if (err) {
                 stateSuccessErrorCount++;
                 log_worker.add('debug', '保存状态正确失败数量', stateSuccessErrorCount);
@@ -191,7 +228,7 @@ var c = new crawler({
             } else {
                 stateSuccessSuccessCount++;
                 log_worker.add('debug', '保存状态正确成功数量', stateSuccessSuccessCount);
-                log_worker.add('debug', '保存状态正确成功', res.ops);
+                log_worker.add('debug', '保存状态正确成功', res);
                 successUrl = lastUrl;
             }
         });
@@ -229,9 +266,24 @@ function begin_craw(proxy) {
 
     } else {
         reqUrl = 'https://book.douban.com/subject/26932731/?icn=index-editionrecommend';
+        // reqUrl = 'https://www.baidu.com/img/bd_logo1.png';
+        savePath = '';
+        switch (isDownload) {
+            case 0 :
+                break;
+            case 1:
+                savePath = 'download/' + uuidV4() + path.extname(reqUrl);
+                break;
+            default:
+                if (path.extname(reqUrl).in_array(ext)) {
+                    savePath = 'download/' + uuidV4() + path.extname(reqUrl);
+                }
+                break;
+        }
         c.queue({
             uri: reqUrl,
-            userAgent: userAgent[numAgent]
+            userAgent: userAgent[numAgent],
+            savePath: savePath
         });
     }
 
@@ -319,9 +371,11 @@ var web = function () {
     });
 };
 
-result_worker.init('结果初始化成功', '结果初始化失败');
-return;
-url_worker.init('地址初始化成功', '地址初始化失败')
+Q.all([
+    log_worker.init('日志初始化成功', '日志初始化失败'),
+    result_worker.init('结果初始化成功', '结果初始化失败'),
+    url_worker.init('地址初始化成功', '地址初始化失败')
+])
     .then(function () {
         url_worker.get('目标地址成功', '目标地址失败')
             .then(function (result) {

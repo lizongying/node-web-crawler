@@ -6,10 +6,9 @@ var config = require('../conf/config');
 var conf = new config();
 
 function Processor() {
-
 }
 
-Processor.prototype.opt = function (result, $, callback) {
+Processor.prototype.handle = function (result, $, callback) {
     var douban_id = result.options.uri.replace(/[^0-9]/ig, '');
 
     var rating = $("#wrapper .rating_num").text();

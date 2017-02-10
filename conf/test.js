@@ -12,12 +12,12 @@ Test.prototype = {
     mysqlPort: 3306,//mysql端口
     mysqlUser: 'root',//mysql用户名
     mysqlPassword: 'root',//mysql密码
-    mysqlDatabase: 'srf',//mysql数据库
     mongodbHost: '127.0.0.1',//mongodb地址
     mongodbPort: 27017,//mongodb端口
     mongodbUser: 'myTester',//mongodb用户名
-    mongodbPassword: 'xyz123',//mongodb密码
-    mongodbDatabase: 'douban'//mongodb数据库
+    mongodbPassword: 'xyz1234',//mongodb密码
+    mongodbAuthSource: 'test',
+    mongodbAuthMechanism: 'DEFAULT'
 };
 
 util.inherits(Test, common);

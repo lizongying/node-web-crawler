@@ -1,16 +1,12 @@
 /**
  * Created by michael on 2016-08-12.
  */
-
-function Common() {}
+// 构造函数里面的属性不会被继承
+// 继承的属性不会被console.log()当做属性输出
+function Common() {
+}
 
 Common.prototype = {
-    init: function() {
-        //console.log('dao init');
-    },
-    add: function() {
-        //console.log('dao add');
-    }
 };
 
 exports = module.exports = Common;

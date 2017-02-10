@@ -1,73 +1,54 @@
 /**
  * Created by michael on 2016-10-17.
  */
+var colors = require('colors');
+var Q = require('q');
 
 var config = require('../../conf/config');
 var conf = new config();
 
-var dao = require('../../dao/');
 var path = require('path');
 
 require('../../lib/date.js');
 
 //写入文件
+var dao = require('../../dao/');
 var file = new dao['file']();
-file.init(path.resolve(__dirname, '..'));
 
 // log
-function LogWorker(env, separator) {
-    this.env = env ? env : conf.env;
-    this.separator = separator ? separator : conf.separator;
+function LogWorker(separator) {
+    this._separator = separator;
 }
 
-LogWorker.prototype.add = function (level, title, content) {
+LogWorker.prototype.init = function (s, e, callback) {
+    var deferred = Q.defer();
+    var ce = null;
+    var cs = null;
+    this._separator = this._separator ? this._separator : conf.separator;
 
-    //判断环境
-    switch (this.env) {
-        case 'test':
-            switch (level) {
-                case 'debug':
-                    console.log(title, content);
-                    break;
-                case 'info':
-                    console.log(title, content);
-                    break;
-                case 'error':
-                    console.log(title, content);
-                    break;
-                default :
-                    break;
-            }
-            break;
-        case 'production':
-            switch (level) {
-                case 'debug':
-                    //console.log(title, content);
-                    break;
-                case 'info':
-                    console.log(title, content);
-                    this._WriteLog(level, title, content);
-                    break;
-                case 'error':
-                    console.log(title, content);
-                    this._WriteLog(level, title, content);
-                    break;
-                default :
-                    break;
-            }
+    file.init(path.resolve(__dirname, '..'), '连接成功', '连接失败')
+        .then(function (result) {
+            cs = result;
+            console.log(s.green);
+            // console.log(result);
+            deferred.resolve(result);
+        })
+        .catch(function (error) {
+            ce = error;
+            console.log(e.red);
+            // console.log(error);
+            deferred.reject(new Error(error));
+        })
+        .done();
 
-            break;
-        default :
-            console.log(title, content);
-            break;
-    }
+    return callback ? deferred.promise.nodeify(callback(ce, cs)) : deferred.promise;
 };
 
-LogWorker.prototype._WriteLog = function(level, title, content) {
+LogWorker.prototype.add = function (level, title, content) {
     var timeCurrent = new Date();
 
     //写入文件
-    var logPath = '/log/' + level + '/' + timeCurrent.format('yyyy-MM-dd') + '.log';//文件名
+    var logPath = path.resolve('log', level + '/' + timeCurrent.format('yyyy-MM-dd') + '.log');//文件名
     var logParams = [
         timeCurrent.format('HH:ii:ss'),
         level,
@@ -75,13 +56,14 @@ LogWorker.prototype._WriteLog = function(level, title, content) {
         content
     ];
 
-    file.add(logPath, logParams.join(','), this.separator, function (err) {
-        if (err) {
-            // console.log('log', '写入文件失败');
-        } else {
-            //console.log('log', '写入文件成功');
-        }
-    });
-}
+    file.add(logPath, logParams, this._separator, '插入成功', '插入失败')
+        .then(function (result) {
+            // console.log(result);
+        })
+        .catch(function (error) {
+            // console.log(error);
+        })
+        .done();
+};
 
 exports = module.exports = LogWorker;

@@ -7,40 +7,32 @@ var Q = require('q');
 var config = require('../../conf/config');
 var conf = new config();
 
-var logWorker = conf.logWorker;//日志worker，必须设置
-
-// 日志worker
-var lWorker = require('../logworker/' + logWorker);
-var log_worker = new lWorker();
-
 var dao = require('../../dao/');
 
 //连接mysql
 var db = new dao['mysql']();
-var mysqlConf = {
-    host: conf.mysqlHost,
-    port: conf.mysqlPort,
-    user: conf.mysqlUser,
-    password: conf.mysqlPassword,
-    database: conf.mysqlDatabase
-};
-
-var urlList = [];
 
 //获取目标地址
-function UrlWorker(env, serverCount, serverCurrent, pushBegin, pushEnd, uri) {
-    this.serverCount = serverCount ? serverCount : conf.serverCount;
-    this.serverCurrent = serverCurrent ? serverCurrent : conf.serverCurrent;
-    this.pushBegin = pushBegin ? pushBegin : conf.pushBegin;
-    this.pushEnd = pushEnd ? pushEnd : conf.pushEnd;
-    this.uri = uri ? uri : conf.uri;
+function UrlWorker(serverCount, serverCurrent, database, urlTable) {
+    this._serverCount = serverCount;
+    this._serverCurrent = serverCurrent;
+    this._database = database;
+    this._urlTable = urlTable;
 }
 
 UrlWorker.prototype.init = function (s, e, callback) {
     var deferred = Q.defer();
     var ce = null;
     var cs = null;
-    db.init(mysqlConf, '数据库初始化成功', '数据库初始化失败')
+    this._database = this._database ? this._database : conf.database;
+    this._urlTable = this._urlTable ? this._urlTable : conf.urlTable;
+
+    Q.all([
+        db.connect('连接成功', '连接失败'),
+        db.query('CREATE DATABASE IF NOT EXISTS ' + this._database + ' DEFAULT CHARSET=utf8', null, '创建数据库成功', '创建数据库失败'),
+        db.query('use ' + this._database, null, '切换数据库成功', '切换数据库失败'),
+        db.query('CREATE TABLE IF NOT EXISTS ' + this._urlTable + ' (`id` int(10) unsigned NOT NULL AUTO_INCREMENT,`site_id` int(10) unsigned NOT NULL,`url` varchar(255) NOT NULL,`created_at` int(10) unsigned NOT NULL,`updated_at` int(10) unsigned NOT NULL,`state` tinyint(3) unsigned NOT NULL,PRIMARY KEY (`id`),UNIQUE KEY `url` (`url`))', null, '创建地址表成功', '创建地址表失败')
+    ])
         .then(function (result) {
             cs = result;
             console.log(s.green);
@@ -62,9 +54,9 @@ UrlWorker.prototype.get = function (s, e, callback) {
     var deferred = Q.defer();
     var ce = null;
     var cs = null;
-    var error = null;
-
-    if (typeof(this.serverCount) === 'undefined' || this.serverCount < 1 || typeof(this.serverCurrent) === 'undefined') {
+    this._serverCount = this._serverCount ? this._serverCount : conf.serverCount;
+    this._serverCurrent = this._serverCurrent ? this._serverCurrent : conf.serverCurrent;
+    if (typeof(this._serverCount) === 'undefined' || this._serverCount < 1 || typeof(this._serverCurrent) === 'undefined') {
         error = {code: 0, message: '服务器配置错误'};
         ce = error;
         console.log(e.red);
@@ -72,43 +64,26 @@ UrlWorker.prototype.get = function (s, e, callback) {
         return callback ? deferred.promise.nodeify(callback(ce, cs)) : deferred.promise;
     }
 
-    var tableUrl = 'url';
-    var querySql = 'SELECT url FROM ' + tableUrl + ' ' +
-        'WHERE mod(id, ' + this.serverCount + ') = ' + this.serverCurrent + ' ORDER BY url ASC';
-    // log_worker.add('debug', '获取目标地址语句', querySql);
+    var querySql = 'SELECT url FROM ' + this._urlTable + ' ' +
+        'WHERE mod(id, ' + this._serverCount + ') = ' + this._serverCurrent + ' ORDER BY url ASC';
+    // console.log(querySql);
 
-    db.query(querySql, '获取目标地址成功', '获取目标地址失败')
+    db.query(querySql, null, '查询成功', '查询失败')
         .then(function (result) {
 
-            var urlList = [];
+            // 测试
+            var urlList = [1, 2];
             if (result.length > 0) {
-
                 for (var i = 0; i < result.length; i++) {
                     var url = result[i].url;
                     urlList.push(url);
                 }
-
-                cs = urlList;
-                console.log(s.green);
-                // console.log(urlList);
-                deferred.resolve(urlList);
-
-                // //urlList.sort();
-                // beginUrl = urlList[0];
-                // endUrl = urlList[urlList.length - 1];
-                //
-                // queryUriCount = urlList.length;
-                // crawler_log('debug', '目标地址数量', urlList.length);
-                //
-                // begin_craw();
-            } else {
-                error = '结果为空';
-                ce = error;
-                console.log(e.red);
-                deferred.reject(new Error(error));
-                //重新获取
-                //setTimeout(add_id, addIDInterval);
             }
+
+            cs = urlList;
+            console.log(s.green);
+            // console.log(urlList);
+            deferred.resolve(urlList);
         })
         .catch(function (error) {
             ce = error;
@@ -118,22 +93,6 @@ UrlWorker.prototype.get = function (s, e, callback) {
         })
         .done();
     return callback ? deferred.promise.nodeify(callback(ce, cs)) : deferred.promise;
-
-    for (var i = this.pushBegin; i < this.pushEnd; i++) {
-        var isServer = i % this.serverCount;
-
-        //不是当前服务器
-        if (isServer !== this.serverCurrent) {
-            continue;
-        }
-
-        var url = this.uri + i;
-        urlList.push(url);
-    }
-
-    //urlList.sort();
-
-    callback(error, urlList);
 };
 
 exports = module.exports = UrlWorker;
