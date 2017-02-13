@@ -20,6 +20,7 @@ ResultWorker.prototype.init = function (s, e, callback) {
     var deferred = Q.defer();
     var ce = null;
     var cs = null;
+    this._resultTable = this._resultTable ? this._resultTable : conf.resultTable;
     mg.connect('连接成功', '连接失败')
         .then(function (result) {
             cs = result;
@@ -44,8 +45,7 @@ ResultWorker.prototype.error = function (resultData, s,e, callback) {
     var cs = null;
     //mongodb
     var mongodbParams = resultData;
-    this._resultTable = this._resultTable ? this._resultTable : conf.resultTable;
-    mg.add(this._resultTable, mongodbParams, '插入成功', '插入失败')
+    mg.insert(this._resultTable, mongodbParams, '插入成功', '插入失败')
         .then(function (result) {
             cs = result;
             console.log(s.green);
@@ -69,8 +69,7 @@ ResultWorker.prototype.false = function (resultData, s,e,  callback) {
     var cs = null;
     //mongodb
     var mongodbParams = resultData;
-    this._resultTable = this._resultTable ? this._resultTable : conf.resultTable;
-    mg.add(this._resultTable, mongodbParams, '插入成功', '插入失败')
+    mg.insert(this._resultTable, mongodbParams, '插入成功', '插入失败')
         .then(function (result) {
             cs = result;
             console.log(s.green);
@@ -94,8 +93,7 @@ ResultWorker.prototype.success = function (resultData, s,e, callback) {
     var cs = null;
     //mongodb
     var mongodbParams = resultData;
-    this._resultTable = this._resultTable ? this._resultTable : conf.resultTable;
-    mg.add(this._resultTable, mongodbParams, '插入成功', '插入失败')
+    mg.insert(this._resultTable, mongodbParams, '插入成功', '插入失败')
         .then(function (result) {
             cs = result;
             console.log(s.green);

@@ -26,11 +26,12 @@ var urlWorker = conf.urlWorker;//地址worker，必须设置
 var resultWorker = conf.resultWorker;//结果worker，必须设置
 var logWorker = conf.logWorker;//日志worker，必须设置
 var processor = conf.processor;//内容处理，必须设置
+var resultToUrl = conf.resultToUrl;
 var isDownload = conf.isDownload;//是否作为文件下载
 var ext = conf.ext;
 var serverCount = conf.serverCount;//服务器数量，必须设置
 var serverCurrent = conf.serverCurrent;//当前服务器 （从0开始），必须设置
-var uri = conf.uri;//目标地址
+var url = conf.url;//目标地址
 var pushBegin = conf.pushBegin;//开始id，包括 (全部服务器)
 var pushEnd = conf.pushEnd;//结束id，不包括 (全部服务器)
 var uriCountMin = conf.uriCountMin;//目标地址数量最小值
@@ -82,7 +83,11 @@ var uWorker = require('./worker/urlworker/' + urlWorker);
 var url_worker = new uWorker();
 
 // 结果worker
-var rWorker = require('./worker/resultworker/' + resultWorker);
+if (resultToUrl) {
+    var rWorker = require('./worker/urlworker/' + urlWorker);
+}else {
+    var rWorker = require('./worker/resultworker/' + resultWorker);
+}
 var result_worker = new rWorker();
 
 // 内容处理
@@ -102,7 +107,7 @@ var c = new crawler({
         log_worker.add('debug', '返回数量', rspCount);
 
         resultStatus = result.statusCode;
-        lastUrl = result.options.uri;
+        lastUrl = result.options.url;
         createTime = (new Date()).getTime().toString().substr(0, 10);
 
         //检查是否结束
@@ -140,7 +145,7 @@ var c = new crawler({
                 updated_at: createTime,
                 state: resultStatus
             };
-            result_worker.error(resultData, lastUrl, createTime, function (err, res) {
+            result_worker.error(resultData, '保存成功', '保存失败', function (err, res) {
                 if (err) {
                     noneErrorErrorCount++;
                     log_worker.add('debug', '保存返回错误失败数量', noneErrorErrorCount);
@@ -148,7 +153,7 @@ var c = new crawler({
                 } else {
                     noneErrorSuccessCount++;
                     log_worker.add('debug', '保存返回错误成功数量', noneErrorSuccessCount);
-                    log_worker.add('debug', '保存返回错误成功', res.ops);
+                    log_worker.add('debug', '保存返回错误成功', res);
                 }
             });
 
@@ -185,7 +190,7 @@ var c = new crawler({
                 } else {
                     stateErrorSuccessCount++;
                     log_worker.add('debug', '保存状态错误成功数量', stateErrorSuccessCount);
-                    log_worker.add('debug', '保存状态错误成功', res.ops);
+                    log_worker.add('debug', '保存状态错误成功', res);
                 }
             });
 

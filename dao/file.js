@@ -14,10 +14,6 @@ function File() {
 utils.inherits(File, common);
 
 File.prototype.init = function (path, s, e, callback) {
-
-    console.log(path);
-    console.log(s);
-    console.log(e);
     var deferred = Q.defer();
     var ce = null;
     var cs = null;

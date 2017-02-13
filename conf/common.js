@@ -6,19 +6,20 @@ function Common() {
 }
 
 Common.prototype = {
-    urlWorker: 'mysql',//地址worker
-    resultWorker: 'file',//结果worker
-    logWorker: 'none',//日志worker
+    urlWorker: 'mongodb',//地址worker
+    resultWorker: 'mongodb',//结果worker
+    logWorker: 'default',//日志worker
     processor: 'douban',//内容处理
     database: 'node_web_crawler',//数据库
     urlTable: 'url',//地址表
     resultTable: 'result',//结果表
+    resultToUrl: 1,//结果作为地址保存
     isDownload: '',//是否作为文件下载 1 0 'auto'
     serverCount: 1,//服务器数量 默认5，必须设置
     serverCurrent: 0,//当前服务器 （从0开始），必须设置
-    uri: 'https://book.douban.com/subject/',//目标地址
-    pushBegin: 20824100,//开始id，包括 (全部服务器)
-    pushEnd: 25000000,//结束id，不包括 (全部服务器)
+    url: 'https://book.douban.com/subject/',//目标地址
+    pushBegin: 100,//开始id，包括 (全部服务器)
+    pushEnd: 150,//结束id，不包括 (全部服务器)
     uriCountMin: 1,//目标地址数量最小值
     maxConnections: 50,//最大连接
     timeout: 60000,//超时（ms）默认60000

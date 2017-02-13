@@ -48,6 +48,7 @@ Mongodb.prototype.connect = function (s, e, callback) {
 
     var url = utils.format('mongodb://%s:%s@%s:%s/%s?authMechanism=%s&authSource=%s', this._user, this._password, this._host, this._port, this._database, this._authMechanism, this._authSource);
 
+    var that = this;
     mongodb.connect(url, function (error, result) {
         if (error) {
             ce = error;
@@ -55,7 +56,7 @@ Mongodb.prototype.connect = function (s, e, callback) {
             // console.log(error);
             deferred.reject(new Error(error));
         } else {
-            Mongodb._client = result;
+            that._client = result;
             cs = result;
             console.log(s.green);
             // console.log(result);
@@ -72,16 +73,14 @@ Mongodb.prototype.insert = function (col, params, s, e, callback) {
     var ce = null;
     var cs = null;
 
-    var collection = Mongodb._client.collection(col);
+    var collection = this._client.collection(col);
     collection.insert(params, function (error, result) {
-        callback(error, result);
         if (error) {
             ce = error;
             console.log(e.red);
             // console.log(error);
             deferred.reject(new Error(error));
         } else {
-            Mongodb._client = result;
             cs = result;
             console.log(s.green);
             // console.log(result);
@@ -92,4 +91,49 @@ Mongodb.prototype.insert = function (col, params, s, e, callback) {
     return callback ? deferred.promise.nodeify(callback(ce, cs)) : deferred.promise;
 };
 
+//查询
+Mongodb.prototype.find = function (col, filter, options, s, e, callback) {
+    var deferred = Q.defer();
+    var ce = null;
+    var cs = null;
+    var collection = this._client.collection(col);
+    collection.find(filter, options).toArray(function (error, result) {
+        if (error) {
+            ce = error;
+            console.log(e.red);
+            // console.log(error);
+            deferred.reject(new Error(error));
+        } else {
+            cs = result;
+            console.log(s.green);
+            // console.log(result);
+            deferred.resolve(result);
+        }
+    });
+
+    return callback ? deferred.promise.nodeify(callback(ce, cs)) : deferred.promise;
+};
+
+//查询一个
+Mongodb.prototype.findOne = function (col, query, options, s, e, callback) {
+    var deferred = Q.defer();
+    var ce = null;
+    var cs = null;
+    var collection = this._client.collection(col);
+    collection.findOne(query, options, function (error, result) {
+        if (error) {
+            ce = error;
+            console.log(e.red);
+            // console.log(error);
+            deferred.reject(new Error(error));
+        } else {
+            cs = result;
+            console.log(s.green);
+            // console.log(result);
+            deferred.resolve(result);
+        }
+    });
+
+    return callback ? deferred.promise.nodeify(callback(ce, cs)) : deferred.promise;
+};
 exports = module.exports = Mongodb;
