@@ -41,7 +41,12 @@ npm install node-web-crawler
 ## 配置说明
 
 ## 使用
-* 启动
+* 启动mysql/mongodb等。
+```bash
+systemctl start mysql.service
+systemctl start mongodb.service
+```
+* 启动node-web-crawler
 ```bash 
 node ./index.js
  ```
