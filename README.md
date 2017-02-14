@@ -9,20 +9,20 @@ node网页爬虫
 ## 安装
 * 安装node。
 ```bash
-yum install node
+$ yum install node
 ```
 * 安装npm。
 ```bash
-yum install npm
+$ yum install npm
 ```
 * 安装需要的数据库。如MySQL、mongodb等，按需安装
 ```bash
-yum install mysql
-yum install mongodb
+$ yum install mysql
+$ yum install mongodb
 ```
 * 安装node-web-crawler.
 ```bash
-npm install node-web-crawler
+$ npm install node-web-crawler
 ```
 
 ## 模块说明
@@ -48,7 +48,7 @@ systemctl start mongodb.service
 ```
 * 启动node-web-crawler
 ```bash 
-node ./index.js
+$ node ./index.js
  ```
 * webui。<code>http://localhost:3000/assets/index.html</code>
 ![image](https://github.com/lizongying/node-web-crawler/raw/master/screenshots/example.PNG)

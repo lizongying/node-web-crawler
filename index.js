@@ -12,6 +12,8 @@ var Q = require('q');
 var uuidV4 = require('uuid/v4');
 var path = require('path');
 
+var fs = require('fs');
+
 // 拓展
 require('./lib/array.js');
 require('./lib/date.js');
@@ -27,24 +29,21 @@ var resultWorker = conf.resultWorker;//结果worker，必须设置
 var logWorker = conf.logWorker;//日志worker，必须设置
 var processor = conf.processor;//内容处理，必须设置
 var resultToUrl = conf.resultToUrl;
-var isDownload = conf.isDownload;//是否作为文件下载
+var isAutoDownload = conf.isAutoDownload;//是否作为文件下载
 var ext = conf.ext;
 var serverCount = conf.serverCount;//服务器数量，必须设置
 var serverCurrent = conf.serverCurrent;//当前服务器 （从0开始），必须设置
-var url = conf.url;//目标地址
-var pushBegin = conf.pushBegin;//开始id，包括 (全部服务器)
-var pushEnd = conf.pushEnd;//结束id，不包括 (全部服务器)
-var uriCountMin = conf.uriCountMin;//目标地址数量最小值
+var reqInterval = conf.reqInterval;//重新请求间隔 ms
 var maxConnections = conf.maxConnections;//最大连接
+var rateLimit = conf.rateLimit;//任务间隔
 var timeout = conf.timeout;//超时10,000（ms）默认60000
 var retries = conf.retries;//重试次数 默认3
 var retryTimeout = conf.retryTimeout;//重试超时
-var reqInterval = conf.reqInterval;//重新请求间隔 ms
-var userAgent = conf.userAgent;// 随机页头
-var isProxy = conf.isProxy;//是否使用代理
-var host = conf.host;
 var referer = conf.referer;
+var isProxy = conf.isProxy;//是否使用代理
 var proxyList = conf.proxyList;//代理地址列表
+var rotateUA = conf.rotateUA;
+var userAgent = conf.userAgent;// 随机页头
 
 var cCount = 0;//当前队列数量，不需要设置
 var reqCount = 0;//请求数量
@@ -83,10 +82,11 @@ var uWorker = require('./worker/urlworker/' + urlWorker);
 var url_worker = new uWorker();
 
 // 结果worker
+var rWorker;
 if (resultToUrl) {
-    var rWorker = require('./worker/urlworker/' + urlWorker);
-}else {
-    var rWorker = require('./worker/resultworker/' + resultWorker);
+    rWorker = require('./worker/urlworker/' + urlWorker);
+} else {
+    rWorker = require('./worker/resultworker/' + resultWorker);
 }
 var result_worker = new rWorker();
 
@@ -96,9 +96,13 @@ var processor_worker = new pr();
 
 var c = new crawler({
     maxConnections: maxConnections,
+    rateLimit: rateLimit,
     timeout: timeout,
     retries: retries,
     retryTimeout: retryTimeout,
+    referer: referer,
+    rotateUA: rotateUA,
+    userAgent: userAgent,
     callback: function (error, result, $) {
         cCount--;
         log_worker.add('debug', '当前队列数量', cCount);
@@ -134,17 +138,20 @@ var c = new crawler({
 
         log_worker.add('info', 'processor', resultStatus + '    ' + lastUrl);
 
+        // console.log(result);
+        var resultData = {
+            url: result.request.href,
+            result: {},
+            created_at: createTime,
+            updated_at: createTime,
+            state: result.statusCode
+        };
+
         if (error) {
             noneErrorCount++;
             log_worker.add('debug', '返回错误数量', noneErrorCount);
             log_worker.add('error', '返回错误', proxy + '   ' + error);
-            resultData = {
-                url: lastUrl,
-                result: {},
-                created_at: createTime,
-                updated_at: createTime,
-                state: resultStatus
-            };
+
             result_worker.error(resultData, '保存成功', '保存失败', function (err, res) {
                 if (err) {
                     noneErrorErrorCount++;
@@ -175,13 +182,6 @@ var c = new crawler({
             log_worker.add('debug', '状态错误数量', stateErrorCount);
             log_worker.add('debug', '状态错误', resultStatus);
 
-            resultData = {
-                url: lastUrl,
-                result: {},
-                created_at: createTime,
-                updated_at: createTime,
-                state: resultStatus
-            };
             result_worker.false(resultData, '保存成功', '保存失败', function (err, res) {
                 if (err) {
                     stateErrorErrorCount++;
@@ -197,30 +197,18 @@ var c = new crawler({
             return;
         }
 
-        // 如果有path就是文件
-        if (result.options.savePath) {
-            resultData = {
-                url: lastUrl,
-                result: {
-                    save_path: result.options.savePath
-                },
-                created_at: createTime,
-                updated_at: createTime,
-                state: resultStatus
-            };
+        // 如果是文件
+        if (result.options.encoding === null) {
+            var savePath = 'download/' + uuidV4() + path.extname(result.request.href);
+            fs.writeFile(path.join(__dirname, savePath), result.body, function (err) {
+                if (!err) {
+                    resultData.result.save_path = savePath;
+                }
+            });
         } else {
             processor_worker.handle(result, $, function (err, res) {
-                if (res) {
-                    // console.log(res);
-                    resultData = {
-                        url: lastUrl,
-                        result: res,
-                        created_at: createTime,
-                        updated_at: createTime,
-                        state: resultStatus
-                    };
-                } else {
-                    resultData = {};
+                if (!err) {
+                    resultData.result = res;
                 }
             });
         }
@@ -243,9 +231,12 @@ var c = new crawler({
     }
 });
 
+c.on('schedule',function(options){
+    console.log('sssssssssssssssssssssss',options);
+});
+
 //开始爬取
 function begin_craw(proxy) {
-
     //检查目标地址是否存在，应该在获取目标地址之后执行爬取
     if (urlList.length < 1) {
         log_worker.add('info', 'fetcher', 'finished');
@@ -255,54 +246,29 @@ function begin_craw(proxy) {
     //获取目标地址
     reqUrl = urlList.shift();
 
-    var numAgent = parseInt(Math.random() * 20, 10);
-
     log_worker.add('debug', '请求数据', reqUrl);
-
-    if (proxy) {
-        c.queue({
-            uri: reqUrl,
-            userAgent: userAgent[numAgent],
-            proxies: [proxy],
-            host: host,
-            referer: referer
-        });
-        log_worker.add('debug', '代理地址', proxy);
-
-    } else {
-        reqUrl = 'https://book.douban.com/subject/26932731/?icn=index-editionrecommend';
-        // reqUrl = 'https://www.baidu.com/img/bd_logo1.png';
-        savePath = '';
-        switch (isDownload) {
-            case 0 :
-                break;
-            case 1:
-                savePath = 'download/' + uuidV4() + path.extname(reqUrl);
-                break;
-            default:
-                if (path.extname(reqUrl).in_array(ext)) {
-                    savePath = 'download/' + uuidV4() + path.extname(reqUrl);
-                }
-                break;
+    var encoding = '';
+    if (isAutoDownload) {
+        if (path.extname(reqUrl).in_array(ext)) {
+            encoding = null;
         }
-        c.queue({
-            uri: reqUrl,
-            userAgent: userAgent[numAgent],
-            savePath: savePath
-        });
     }
+    var proxyies = [];
+    if (proxy) {
+        proxyies = [proxy];
+    }
+
+    c.queue({
+        uri: reqUrl,
+        encoding: encoding,
+        proxies: proxyies
+    });
 
     cCount++;
     log_worker.add('debug', '当前队列数量', cCount);
 
     reqCount++;
     log_worker.add('debug', '请求数量', reqCount);
-}
-
-//目标地址不能少于最小值
-if (pushEnd - pushBegin < uriCountMin) {
-    log_worker.add('debug', '请求数据不能小于', uriCountMin);
-    return;
 }
 
 beginTime = new Date();
@@ -414,7 +380,7 @@ Q.all([
             .done();
     })
     .then(function () {
-        web();
+        // web();
     })
     .catch(function (error) {
         }

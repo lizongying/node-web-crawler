@@ -1,14 +1,14 @@
 {
   "name": "node-web-crawler",
   "version": "0.0.1",
-  "description": "spider-web-crawler",
+  "description": "node web crawler spider",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
     "colors": "^1.1.2",
-    "crawler": "~0.4.3",
+    "crawler": "^1.0.2",
     "express": "^4.14.0",
     "mongodb": "~2.2.8",
     "mysql": "~2.11.1",

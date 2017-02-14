@@ -85,3 +85,4 @@ fabric.properties
 
 /conf/production.js
 /data/result.txt
+/download/

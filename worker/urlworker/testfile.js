@@ -8,18 +8,19 @@ var config = require('../../conf/config');
 var conf = new config();
 
 //获取目标地址
-function UrlWorker(serverCount, serverCurrent, pushBegin, pushEnd, url) {
+function UrlWorker(serverCount, serverCurrent, database, urlTable) {
     this._serverCount = serverCount;
     this._serverCurrent = serverCurrent;
-    this._pushBegin = pushBegin;
-    this._pushEnd = pushEnd;
-    this._url = url;
+    this._database = database;
+    this._urlTable = urlTable;
 }
 
 UrlWorker.prototype.init = function (s, e, callback) {
     var deferred = Q.defer();
     var ce = null;
     var cs = null;
+
+    this._url = 'https://www.baidu.com/img/bd_logo1.png'; //目标地址
 
     cs = s;
     console.log(s.green);
@@ -43,22 +44,7 @@ UrlWorker.prototype.get = function (s, e, callback) {
         return callback ? deferred.promise.nodeify(callback(ce, cs)) : deferred.promise;
     }
 
-    var urlList = [];
-    this._pushBegin = this._pushBegin ? this._pushBegin : conf.pushBegin;
-    this._pushEnd = this._pushEnd ? this._pushEnd : conf.pushEnd;
-    this._url = this._url ? this._url : conf.url;
-
-    for (var i = this._pushBegin; i < this._pushEnd; i++) {
-        var isServer = i % this._serverCount;
-
-        //不是当前服务器
-        if (isServer !== this._serverCurrent) {
-            continue;
-        }
-
-        var url = this._url + i;
-        urlList.push(url);
-    }
+    var urlList = [this._url];
 
     cs = urlList;
     console.log(s.green);
