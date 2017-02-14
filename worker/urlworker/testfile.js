@@ -20,7 +20,10 @@ UrlWorker.prototype.init = function (s, e, callback) {
     var ce = null;
     var cs = null;
 
-    this._url = 'https://www.baidu.com/img/bd_logo1.png'; //目标地址
+    this._url = [
+        'https://www.baidu.com/img/bd_logo1.png',
+        'http://a.hiphotos.baidu.com/image/h%3D200/sign=758b33e74e10b912a0c1f1fef3fcfcb5/8326cffc1e178a82019b0bfcff03738da877e8c3.jpg'
+    ]; //目标地址
 
     cs = s;
     console.log(s.green);
@@ -44,7 +47,7 @@ UrlWorker.prototype.get = function (s, e, callback) {
         return callback ? deferred.promise.nodeify(callback(ce, cs)) : deferred.promise;
     }
 
-    var urlList = [this._url];
+    var urlList = this._url;
 
     cs = urlList;
     console.log(s.green);

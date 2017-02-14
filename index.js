@@ -258,11 +258,11 @@ function begin_craw(proxy) {
         proxyies = [proxy];
     }
 
-    c.queue({
-        uri: reqUrl,
+    c.queue([{
+        uri: urlList,
         encoding: encoding,
         proxies: proxyies
-    });
+    }]);
 
     cCount++;
     log_worker.add('debug', '当前队列数量', cCount);
