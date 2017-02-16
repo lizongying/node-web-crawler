@@ -28,7 +28,7 @@ Common.prototype = {
     separator: '\r\n',//分隔符（文件）
     reqInterval: 0,//重新请求间隔 ms
     maxConnections: 50,//最大连接
-    rateLimit: 2000,//任务间隔
+    rateLimit: 1,//任务间隔
     timeout: 60000,//超时（ms）默认60000
     retries: 1,//重试次数 默认3
     retryTimeout: 10000,//重试超时（ms）默认10000
@@ -58,7 +58,7 @@ Common.prototype = {
         'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1; Trident/4.0; SE 2.X MetaSr 1.0; SE 2.X MetaSr 1.0; .NET CLR 2.0.50727; SE 2.X MetaSr 1.0)'
     ],
     isProxy: false,//false 不使用代理 true 使用代理
-    proxyList: [] //'http://ip:port'
+    proxies: ['http://127.0.0.1:1080'] //'http://ip:port'
 };
 
 exports = module.exports = Common;

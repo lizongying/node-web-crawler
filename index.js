@@ -41,7 +41,7 @@ var retries = conf.retries;//重试次数 默认3
 var retryTimeout = conf.retryTimeout;//重试超时
 var referer = conf.referer;
 var isProxy = conf.isProxy;//是否使用代理
-var proxyList = conf.proxyList;//代理地址列表
+var proxies = conf.proxies;//代理地址列表
 var rotateUA = conf.rotateUA;
 var userAgent = conf.userAgent;// 随机页头
 
@@ -96,14 +96,18 @@ var processor_worker = new pr();
 
 var c = new crawler({
     maxConnections: maxConnections,
-    rateLimit: rateLimit,
+    rateLimit: 0,
     timeout: timeout,
     retries: retries,
     retryTimeout: retryTimeout,
     referer: referer,
     rotateUA: rotateUA,
     userAgent: userAgent,
+    proxies: isProxy ? proxies : [],
     callback: function (error, result, $) {
+        console.log('hhhh', result.request.href);
+        console.log('bbbbb', result.body);
+        return;
         cCount--;
         log_worker.add('debug', '当前队列数量', cCount);
 
@@ -138,7 +142,6 @@ var c = new crawler({
 
         log_worker.add('info', 'processor', resultStatus + '    ' + lastUrl);
 
-        // console.log(result);
         var resultData = {
             url: result.request.href,
             result: {},
@@ -197,6 +200,7 @@ var c = new crawler({
             return;
         }
 
+
         // 如果是文件
         if (result.options.encoding === null) {
             var savePath = 'download/' + uuidV4() + path.extname(result.request.href);
@@ -231,12 +235,15 @@ var c = new crawler({
     }
 });
 
-c.on('schedule',function(options){
-    console.log('sssssssssssssssssssssss',options);
+c.on('schedule', function (options) {
+});
+
+c.on('request', function (options) {
+    reqUrl = options.uri;
 });
 
 //开始爬取
-function begin_craw(proxy) {
+function begin_craw() {
     //检查目标地址是否存在，应该在获取目标地址之后执行爬取
     if (urlList.length < 1) {
         log_worker.add('info', 'fetcher', 'finished');
@@ -244,30 +251,27 @@ function begin_craw(proxy) {
     }
 
     //获取目标地址
-    reqUrl = urlList.shift();
-
-    log_worker.add('debug', '请求数据', reqUrl);
-    var encoding = '';
-    if (isAutoDownload) {
-        if (path.extname(reqUrl).in_array(ext)) {
-            encoding = null;
+    var q = [];
+    urlList.forEach(function (i) {
+        var encoding = '';
+        if (isAutoDownload) {
+            if (path.extname(i).in_array(ext)) {
+                encoding = null;
+            }
         }
-    }
-    var proxyies = [];
-    if (proxy) {
-        proxyies = [proxy];
-    }
+        q.push({
+            uri: i,
+            limiter: "key1",
+            encoding: null
+        })
+    });
 
-    c.queue([{
-        uri: urlList,
-        encoding: encoding,
-        proxies: proxyies
-    }]);
+    c.queue(q);
 
-    cCount++;
+    cCount += urlList.length;
     log_worker.add('debug', '当前队列数量', cCount);
 
-    reqCount++;
+    reqCount += urlList.length;
     log_worker.add('debug', '请求数量', reqCount);
 }
 
@@ -301,8 +305,6 @@ var web = function () {
             reqState: {info: '请求状态', val: reqState},
             lastUrl: {info: '最后返回URL', val: lastUrl},
             successUrl: {info: '最后成功URL', val: successUrl},
-            pushBegin: {info: '开始URL', val: beginUrl},
-            pushEnd: {info: '结束URL', val: endUrl},
             reqUrl: {info: '当前请求URL', val: reqUrl},
             cCount: {info: '当前队列数量', val: cCount},
             queryUrlErrorCount: {info: '获取目标地址失败', val: queryUrlErrorCount},
@@ -364,15 +366,7 @@ Q.all([
 
                 log_worker.add('info', 'fetcher', 'beginning');
 
-                if (isProxy) {
-
-//    遍历代理 forEach是函数
-                    proxyList.forEach(function (proxy) {
-                        begin_craw(proxy);
-                    });
-                } else {
-                    begin_craw();
-                }
+                begin_craw();
             })
             .catch(function (error) {
                 log_worker.add('debug', '获取目标地址错误', error.code);

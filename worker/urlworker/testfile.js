@@ -21,8 +21,8 @@ UrlWorker.prototype.init = function (s, e, callback) {
     var cs = null;
 
     this._url = [
-        'https://www.baidu.com/img/bd_logo1.png',
-        'http://a.hiphotos.baidu.com/image/h%3D200/sign=758b33e74e10b912a0c1f1fef3fcfcb5/8326cffc1e178a82019b0bfcff03738da877e8c3.jpg'
+        'http://pic.baike.soso.com/p/20131213/20131213115637-1062134399.jpg',
+        'https://www.baidu.com/img/bd_logo1.png'
     ]; //目标地址
 
     cs = s;
