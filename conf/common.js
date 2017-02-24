@@ -6,12 +6,14 @@ function Common() {
 }
 
 Common.prototype = {
-    urlWorker: 'testfile',//地址worker
+    urlWorker: 'm',//地址worker
     resultWorker: 'mongodb',//结果worker
     logWorker: 'default',//日志worker
     processor: 'test',//内容处理
-    database: 'node_web_crawler',//数据库
-    urlTable: 'url',//地址表
+    // database: 'node_web_crawler',//数据库
+    // urlTable: 'url',//地址表
+    database: 'douban',//数据库
+    urlTable: 'srf_book_info',//地址表
     resultTable: 'result',//结果表
     resultToUrl: false,//结果作为地址保存
     isAutoDownload: true,//是否判断作为文件下载

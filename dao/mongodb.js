@@ -91,6 +91,29 @@ Mongodb.prototype.insert = function (col, params, s, e, callback) {
     return callback ? deferred.promise.nodeify(callback(ce, cs)) : deferred.promise;
 };
 
+//总数
+Mongodb.prototype.count = function (col, filter, options, s, e, callback) {
+    var deferred = Q.defer();
+    var ce = null;
+    var cs = null;
+    var collection = this._client.collection(col);
+    collection.count(filter, options, function (error, result) {
+        if (error) {
+            ce = error;
+            console.log(e.red);
+            // console.log(error);
+            deferred.reject(new Error(error));
+        } else {
+            cs = result;
+            console.log(s.green);
+            // console.log(result);
+            deferred.resolve(result);
+        }
+    });
+
+    return callback ? deferred.promise.nodeify(callback(ce, cs)) : deferred.promise;
+};
+
 //查询
 Mongodb.prototype.find = function (col, filter, options, s, e, callback) {
     var deferred = Q.defer();

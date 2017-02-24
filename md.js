@@ -84,19 +84,9 @@ var url_worker = new uWorker();
 var web = function () {
     var app = express();
     app.get('/api', function (req, res) {
-        url_worker.get('目标地址成功', '目标地址失败')
+        url_worker.count('目标地址成功', '目标地址失败')
             .then(function (result) {
                 reqState = '运行中';
-                queryUrlSuccessCount++;
-                log_worker.add('debug', '获取目标地址成功数量', queryUrlSuccessCount);
-                log_worker.add('info', 'scheduler', 'ok');
-                urlList = result;
-
-                beginUrl = urlList[0];
-                endUrl = urlList[urlList.length - 1];
-
-                queryUriCount = urlList.length;
-                log_worker.add('debug', '目标地址数量', urlList.length);
                 res.json({code: 1, message: 'ok', data: result});
             })
             .catch(function (error) {
