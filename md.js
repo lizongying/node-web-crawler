@@ -83,8 +83,10 @@ var url_worker = new uWorker();
 
 var web = function () {
     var app = express();
-    app.get('/api', function (req, res) {
-        url_worker.count('目标地址成功', '目标地址失败')
+    app.get('/count', function (req, res) {
+        var query = {'isbn10': {'$exists': true}};
+        var options = {};
+        url_worker.count(query, options, '目标地址成功', '目标地址失败')
             .then(function (result) {
                 reqState = '运行中';
                 res.json({code: 1, message: 'ok', data: result});
@@ -94,7 +96,21 @@ var web = function () {
             })
             .done();
     });
+    app.get('/find', function (req, res) {
+        var skip = req.query.p ? req.query.p * 10 : 0;
 
+        var filter = {'isbn10': {'$exists': true}};
+        var options = {'_id': 0, 'skip': skip, 'limit': 10};
+        url_worker.page(filter, options, '目标地址成功', '目标地址失败')
+            .then(function (result) {
+                reqState = '运行中';
+                res.json({code: 1, message: 'ok', data: result});
+            })
+            .catch(function (error) {
+                log_worker.add('debug', '获取目标地址错误', error.code);
+            })
+            .done();
+    });
     app.listen(3000, function () {
         console.log('app is listening at port 3000'.green);
     });

@@ -92,12 +92,12 @@ Mongodb.prototype.insert = function (col, params, s, e, callback) {
 };
 
 //总数
-Mongodb.prototype.count = function (col, filter, options, s, e, callback) {
+Mongodb.prototype.count = function (col, query, options, s, e, callback) {
     var deferred = Q.defer();
     var ce = null;
     var cs = null;
     var collection = this._client.collection(col);
-    collection.count(filter, options, function (error, result) {
+    collection.count(query, options, function (error, result) {
         if (error) {
             ce = error;
             console.log(e.red);

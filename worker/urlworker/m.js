@@ -43,7 +43,7 @@ UrlWorker.prototype.init = function (s, e, callback) {
     return callback ? deferred.promise.nodeify(callback(ce, cs)) : deferred.promise;
 };
 
-UrlWorker.prototype.count = function (s, e, callback) {
+UrlWorker.prototype.count = function (q, o, s, e, callback) {
     var deferred = Q.defer();
     var ce = null;
     var cs = null;
@@ -57,13 +57,42 @@ UrlWorker.prototype.count = function (s, e, callback) {
         return callback ? deferred.promise.nodeify(callback(ce, cs)) : deferred.promise;
     }
 
-    // var querySql = 'SELECT url FROM ' + this._urlTable + ' ' +
-    //     'WHERE mod(id, ' + this._serverCount + ') = ' + this._serverCurrent + ' ORDER BY url ASC';
-    // console.log(querySql);
+    var query = q;
+    var options = o;
+    mg.count(this._urlTable, query, options, '查询成功', '查询失败')
+        .then(function (result) {
+            // 测试
 
-    var filter = {'isbn10': {'$exists': true}};
-    var options = {};
-    mg.count(this._urlTable, filter, options, '查询成功', '查询失败')
+            console.log(s.green);
+            deferred.resolve(result);
+        })
+        .catch(function (error) {
+            ce = error;
+            console.log(e.red);
+            // console.log(error);
+            deferred.reject(new Error(error));
+        })
+        .done();
+    return callback ? deferred.promise.nodeify(callback(ce, cs)) : deferred.promise;
+};
+
+UrlWorker.prototype.page = function (f, o, s, e, callback) {
+    var deferred = Q.defer();
+    var ce = null;
+    var cs = null;
+    this._serverCount = this._serverCount ? this._serverCount : conf.serverCount;
+    this._serverCurrent = this._serverCurrent ? this._serverCurrent : conf.serverCurrent;
+    if (typeof(this._serverCount) === 'undefined' || this._serverCount < 1 || typeof(this._serverCurrent) === 'undefined') {
+        error = {code: 0, message: '服务器配置错误'};
+        ce = error;
+        console.log(e.red);
+        deferred.reject(new Error(error));
+        return callback ? deferred.promise.nodeify(callback(ce, cs)) : deferred.promise;
+    }
+
+    var filter = f;
+    var options = o;
+    mg.find(this._urlTable, filter, options, '查询成功', '查询失败')
         .then(function (result) {
             // 测试
 
