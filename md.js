@@ -136,10 +136,10 @@ var web = function () {
             .done();
     });
     app.get('/find', function (req, res) {
-        var skip = req.query.p ? req.query.p * 10 : 0;
+        var skip = req.query.p ? req.query.p * 100 : 0;
 
         var filter = {'isbn10': {'$exists': true}};
-        var options = {'_id': 0, 'skip': skip, 'limit': 10};
+        var options = {'_id': 0, 'skip': skip, 'limit': 100};
         url_worker.page(filter, options, '目标地址成功', '目标地址失败')
             .then(function (result) {
                 reqState = '运行中';
