@@ -84,7 +84,7 @@ var url_worker = new uWorker();
 var web = function () {
     var app = express();
     app.get('/count', function (req, res) {
-        var query = {'isbn10': {'$exists': true}};
+        var query = {};
         var options = {};
         url_worker.count(query, options, '目标地址成功', '目标地址失败')
             .then(function (result) {
@@ -138,7 +138,7 @@ var web = function () {
     app.get('/find', function (req, res) {
         var skip = req.query.p ? req.query.p * 100 : 0;
 
-        var filter = {'isbn10': {'$exists': true}};
+        var filter = {};
         var options = {'_id': 0, 'skip': skip, 'limit': 100};
         url_worker.page(filter, options, '目标地址成功', '目标地址失败')
             .then(function (result) {
