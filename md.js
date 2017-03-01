@@ -13,6 +13,7 @@ var uuidV4 = require('uuid/v4');
 var path = require('path');
 
 var fs = require('fs');
+var ObjectID = require('mongodb').ObjectID;
 
 // 拓展
 require('./lib/array.js');
@@ -137,9 +138,19 @@ var web = function () {
     });
     app.get('/find', function (req, res) {
         var skip = req.query.p ? req.query.p * 100 : 0;
+        var id = req.query.i;
 
         var filter = {};
-        var options = {'_id': 0, 'skip': skip, 'limit': 100};
+        var options = {};
+        if (id) {
+            filter = {'_id': {'$gt': new ObjectID(id)}};
+            console.log(filter);
+            options = {'limit': 100};
+        } else {
+            filter = {};
+            options = {'skip': skip, 'limit': 100};
+        }
+
         url_worker.page(filter, options, '目标地址成功', '目标地址失败')
             .then(function (result) {
                 reqState = '运行中';
