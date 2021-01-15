@@ -52,3 +52,6 @@ $ node ./index.js
  ```
 * webui。<code>http://localhost:3000/assets/index.html</code>
 ![image](https://github.com/lizongying/node-web-crawler/raw/master/screenshots/example.PNG)
+
+## note
+2021.01.15 为了处理github上的代码警告，升级了包，没做测试
