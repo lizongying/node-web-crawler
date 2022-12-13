@@ -10,7 +10,7 @@
   "dependencies": {
     "colors": "^1.1.2",
     "crawler": "^1.0.2",
-    "express": "^4.14.0",
+    "express": "^4.17.3",
     "mongodb": "^3.6.3",
     "mysql": "^2.18.1",
     "q": "^1.4.1",
